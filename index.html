@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f9fafc"><title>SK매직 구독 견적자동화 시스템 | 관리자 V1.5</title>
+<link rel="stylesheet" href="./assets/style.css?v=1.5">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-eyebrow"><span class="brand-eyebrow-dot"></span> SK MAGIC BUSINESS</div>
+    <div class="brand-mark"><img src="./assets/skmagic_logo_fitted.png" alt="SK magic 로고"></div>
+    <div class="brand-sub"><span>구독 견적자동화</span><b>ADMIN</b></div>
+    <div class="brand-caption">SMART QUOTATION STUDIO</div>
+  </div>
+  <nav class="nav" aria-label="주 메뉴">
+    <button class="nav-btn active" data-page="write"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span class="nav-label">견적 작성</span><span class="nav-arrow" aria-hidden="true">›</span></button>
+    <button class="nav-btn" data-page="products"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="nav-label">제품 · 요금표</span><span class="nav-arrow" aria-hidden="true">›</span></button>
+    <button class="nav-btn" data-page="managers"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21v-2c0-4 3.1-6.5 7.5-6.5s7.5 2.5 7.5 6.5v2"/></svg></span><span class="nav-label">담당자 관리</span><span class="nav-arrow" aria-hidden="true">›</span></button>
+    <button class="nav-btn" data-page="history"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="nav-label">견적 이력</span><span class="nav-arrow" aria-hidden="true">›</span></button>
+    <button class="nav-btn" data-page="settings"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5h4l.7 2.2 2 1 2.2-.6 2 3.4-1.5 1.8v2.2l1.5 1.8-2 3.4-2.2-.6-2 1L14 21.5h-4l-.7-2.2-2-1-2.2.6-2-3.4 1.5-1.8v-2.2L3.1 9.7l2-3.4 2.2.6 2-1z"/><circle cx="12" cy="12.5" r="2.5"/></svg></span><span class="nav-label">설정 · 백업</span><span class="nav-arrow" aria-hidden="true">›</span></button>
+  </nav>
+  <div class="sidebar-bottom"><span class="live-dot"></span><span>SK매직 계산기 연동</span><small>관리자 WEB V1.5</small></div>
+</aside>
+<div class="app-main">
+<header class="app-top"><div><div class="eyebrow">SK MAGIC · SUBSCRIPTION QUOTATION</div><h1>구독 견적자동화 시스템</h1><p>고객에게 전달할 공식 견적서를 쉽고 정확하게 작성합니다.</p></div><div class="top-tools"><a href="https://kiuja78.github.io/skmagic-product-info/" target="_blank" rel="noopener noreferrer" class="quiet-link">원본 계산기 ↗</a><div class="status-pill" id="sourceState"><span class="spinner"></span> 원본 데이터 연결 중</div></div></header>
+<div class="global-alert" id="globalAlert" role="status" aria-live="polite"></div>
+<section class="page active" id="page-write">
+  <div class="workspace">
+  <div class="editor-column" aria-label="견적 조건 입력 영역">
+    <div class="editor-intro"><span>견적 작성</span><small>조건을 입력하고 아래로 스크롤하세요. 각 단계는 접고 펼칠 수 있습니다.</small></div>
+    <section class="panel"><div class="panel-head"><div><small>01 · 견적 기본정보</small><h2>고객 및 담당자</h2></div><span class="subtle-tag" id="draftState">자동 임시저장</span></div>
+    <div class="two-input"><label>고객명 / 거래처<input id="customerName" placeholder="고객님 또는 거래처명"></label><label>견적 작성일<input id="quoteDate" type="date"></label></div>
+    <div class="manager-pick-line"><label>등록된 담당자 선택<select id="savedManagerSelect"><option value="">직접 입력</option></select></label><button type="button" class="secondary-btn" id="openManagerMenu">담당자 등록 · 관리</button></div>
+    <div class="two-input"><label>담당자<input id="managerName" placeholder="담당자 이름 및 직함"></label><label>담당자 연락처<input id="managerPhone" placeholder="010-0000-0000"></label></div>
+    </section>
+    <section class="panel"><div class="panel-head"><div><small>02 · 계약조건 선택</small><h2>제품 · 구독료</h2></div><span class="subtle-tag" id="catalogCount">-</span></div>
+      <div class="two-input"><label>기준월<select id="monthSelect"></select></label><label>제품군<select id="categorySelect"></select></label></div>
+      <label>모델 / 제품명 검색<input id="searchInput" type="search" placeholder="모델명 또는 제품명 검색"></label>
+      <label>제품 선택<select id="productSelect"><option value="">데이터를 불러오고 있습니다</option></select></label>
+      <div id="productPeek" class="product-peek empty">제품을 선택하면 원본 사진과 상세정보가 표시됩니다.</div>
+      <div class="field-divider"><span>계약 조건</span></div>
+      <div class="two-input"><label id="wrap-variant" class="conditionally">제품 / 필터<select id="cond-variant"></select></label><label id="wrap-size" class="conditionally">사이즈<select id="cond-size"></select></label></div>
+      <div class="two-input"><label id="wrap-management" class="conditionally">관리방식<select id="cond-management"></select></label><label id="wrap-plan" class="conditionally">케어 / 요금제<select id="cond-plan"></select></label></div>
+      <div class="two-input"><label id="wrap-visitCycleMonths" class="conditionally">점검주기<select id="cond-visitCycleMonths"></select></label><label id="wrap-contractYears" class="conditionally">의무사용기간<select id="cond-contractYears"></select></label></div>
+      <div class="two-input"><label>구독 유형<select id="customerTypeSelect"></select></label><label>수량<input id="quantityInput" type="number" value="1" min="1" max="999" step="1"></label></div>
+      <div class="field-divider"><span>선택 조건 구독료</span></div>
+      <div class="price-highlight"><div><small>월 구독료</small><strong id="selectedPrice">-</strong><p id="selectedSource">계약 조건을 선택해주세요.</p></div><span class="price-icon">₩</span></div>
+      <label class="check-row"><input type="checkbox" id="specialToggle"><span><b>특판 견적가격 직접 입력</b><small>일반 구독료와 별도로 입력 · 견적서에 특판 표시</small></span></label>
+      <div id="specialAmountBox" class="special-box hidden"><div class="two-input"><label>특판 월 구독료<input id="specialAmount" type="number" min="1" step="1" placeholder="금액 직접 입력"></label><label>의무기간 수기 입력(개월)<input id="specialMonths" type="number" min="1" step="1" placeholder="원본 조건 사용"></label></div></div>
+      <div class="field-divider"><span>할인프로모션 (선택)</span></div>
+      <label>조건에 해당하는 혜택<select id="promoSelect"><option value="">적용 안 함</option></select></label>
+      <div class="help-note" id="promoHelp">구독 조건과 고객유형이 일치하는 프로모션만 표시합니다.</div>
+      <div class="btn-grid"><button type="button" class="primary-btn" id="addBtn">+ 현재 제품을 견적에 추가</button><button type="button" class="secondary-btn" id="clearBtn">전체 비우기</button></div>
+    </section>
+    <section class="panel"><div class="panel-head"><div><small>03 · 견적 조정</small><h2>추가된 제품</h2></div><span class="subtle-tag" id="itemCount">0개</span></div><div class="tiny-note">월 구독료·의무기간·점검조건은 견적별로 수정 가능합니다. 원본 계산기 데이터는 변경되지 않습니다.</div><div id="addedItems" class="added-items"><div class="empty-message">추가된 제품이 없습니다.</div></div></section>
+    <section class="panel"><div class="panel-head"><div><small>04 · 출력 옵션</small><h2>견적서 구성</h2></div></div>
+      <label class="check-row"><input type="checkbox" id="showMonthly" checked><span><b>수량별 월 구독료 표 표시</b><small>선택할 때만 A4에 노출</small></span></label>
+      <label class="check-row"><input type="checkbox" id="showCommit" checked><span><b>의무기간 총 구독료 표시</b><small>프로모션 반영 예상금액과 함께 표시</small></span></label>
+      <label class="check-row"><input type="checkbox" id="showImages" checked><span><b>제품 이미지 표시</b><small>계산기 원본 이미지를 그대로 사용</small></span></label>
+      <label class="check-row"><input type="checkbox" id="showDetails" checked><span><b>제품 상세정보 표시</b><small>모델별 제품 사진과 주요 사양을 보기 쉽게 배치</small></span></label>
+      <label>특이사항<textarea id="customNote" placeholder="견적서에 추가할 안내사항 (선택)" rows="3"></textarea></label>
+    </section>
+  </div>
+  <div class="preview-column" aria-label="견적서 미리보기 영역"><div class="preview-toolbar"><div><small>LIVE PREVIEW · A4</small><h2>공식 구독 견적서 미리보기</h2></div><div class="toolbar-actions"><button class="tool-btn" id="openImageBtn">이미지 미리보기 · 복사</button><button class="tool-btn" id="savePdfBtn">PDF 저장</button><button class="tool-btn accent" id="printBtn">바로인쇄</button></div></div>
+    <article class="paper" id="paper" aria-label="A4 견적서 미리보기"></article>
+    <div class="preview-footnote">견적서에 표시된 금액과 계약조건을 클릭하면 직접 수정할 수 있습니다.</div>
+  </div>
+  </div>
+</section>
+<section class="page" id="page-products"><div class="wide-page"><div class="page-title"><small>REFERENCE CATALOG</small><h2>원본 제품 · 월별 요금표</h2><p>가격을 복사하거나 추측하지 않고 연결된 계산기 데이터에서 직접 불러옵니다. 가격 변경은 원본 계산기에서 관리하고, 견적별 특판·수정은 견적 작성 화면에서 진행합니다.</p></div><div class="panel"><div class="two-input"><label>제품 검색<input id="catalogSearch" placeholder="제품명 또는 모델명"></label><label>기준월<select id="catalogMonth"></select></label></div><div id="catalogGrid" class="catalog-grid"></div></div></div></section>
+<section class="page" id="page-managers"><div class="wide-page managers-page">
+ <div class="page-title"><small>MANAGER DIRECTORY</small><h2>담당자 등록 · 관리</h2><p>담당자를 등록해두면 견적 작성 시 목록에서 선택할 수 있습니다. 등록·수정·삭제한 정보는 이 브라우저에 저장됩니다.</p></div>
+ <div class="manager-workspace">
+ <section class="panel"><div class="panel-head"><div><small>담당자 정보</small><h2 id="managerEditorTitle">새 담당자 등록</h2></div><button class="secondary-btn" id="managerNewBtn" type="button">신규 입력</button></div>
+ <input type="hidden" id="managerEditId"><label>이름<input id="managerEditName" placeholder="예: 김건일"></label><label>직함 / 호칭<input id="managerEditRole" placeholder="예: 팀장"></label><label>연락처<input id="managerEditPhone" placeholder="예: 010-0000-0000" inputmode="tel"></label>
+ <div class="btn-grid"><button class="primary-btn" id="managerSaveBtn" type="button">담당자 저장</button><button class="secondary-btn" id="managerCancelBtn" type="button">입력 취소</button></div>
+ <p class="manager-tip" id="managerFormStatus">등록 후 견적 작성 화면에서 선택할 수 있습니다.</p></section>
+ <section class="panel"><div class="panel-head"><div><small>등록 현황</small><h2>저장된 담당자</h2></div><span class="subtle-tag" id="managerCount">0명</span></div><div class="manager-list" id="managerList"></div></section>
+ </div></div></section>
+<section class="page" id="page-history"><div class="wide-page"><div class="page-title"><small>HISTORY</small><h2>견적 이력</h2><p>이 버전의 이력은 현재 브라우저에 저장됩니다. 기기를 바꾸기 전 설정 메뉴에서 백업 파일을 보관해주세요.</p></div><div class="panel"><div class="btn-grid"><button class="primary-btn" id="saveHistoryBtn">현재 견적을 이력에 저장</button><button class="secondary-btn" id="historyExportBtn">이력 JSON 백업</button></div><div id="historyList" class="history-list"></div></div></div></section>
+<section class="page" id="page-settings"><div class="wide-page"><div class="page-title"><small>ADMIN SETTINGS</small><h2>연동 · 저장 · 백업</h2><p>SK매직 제품정보 사이트를 읽는 방식이며, 구글시트와 별개의 기준 데이터를 임의로 만들지 않습니다.</p></div><div class="panel company-settings-panel"><h3>견적서 발행 사업자정보</h3><p class="settings-text">견적서 우측 상단에 표시되는 정보입니다. 아래 내용은 첨부 시안 기준 초기값이며, 실제 사업자정보를 확인한 후 수정해주세요.</p>
+  <div class="two-input"><label>상호<input id="supplierName" placeholder="사업자명"></label><label>사업자등록번호<input id="supplierNo" placeholder="000-00-00000"></label></div>
+  <div class="two-input"><label>대표이사<input id="supplierCeo"></label><label>업태<input id="supplierType"></label></div>
+  <label>사업장 주소<input id="supplierAddress"></label><label>종목<input id="supplierCategory"></label>
+  <div class="help-note">수정 즉시 미리보기와 출력물에 반영되며, 현재 브라우저에 자동 저장됩니다.</div></div>
+ <div class="panel"><h3>원본 데이터 연결</h3><p class="settings-text">기본 데이터 주소: <code>https://kiuja78.github.io/skmagic-product-info/data.js</code></p><div class="two-input"><label>계산기 데이터 파일 URL<input id="dataUrlInput" value="https://kiuja78.github.io/skmagic-product-info/data.js" spellcheck="false"></label><label>기준 데이터 새로고침<button class="secondary-btn full" id="reloadDataBtn">원본 다시 불러오기</button></label></div><p class="settings-text" id="syncDetails"></p></div><div class="panel"><h3>기기 저장 및 복원</h3><p class="settings-text">담당자 목록·발행 사업자정보·작성 중인 견적·이력은 이 브라우저에 저장됩니다. 다른 컴퓨터와 자동 동기화되지는 않습니다.</p><div class="btn-grid"><button id="backupBtn" class="primary-btn">모든 작업 데이터 백업(JSON)</button><button id="restoreBtn" class="secondary-btn">백업 파일에서 복원</button></div><input id="restoreFile" class="hidden" type="file" accept=".json,application/json"><hr><h3>제품 이미지 직접 선택 (이 기기 전용)</h3><p class="settings-text">원본 계산기 사진 대신 특정 모델 사진을 사용할 때만 업로드합니다. 사진 자체는 변형하지 않고 이 브라우저에 보관합니다.</p><div class="two-input"><label>대상 모델<select id="imageOverrideModel"></select></label><label>이미지 선택<input id="imageOverrideInput" type="file" accept="image/jpeg,image/png,image/webp"></label></div><div class="btn-grid"><button id="removeImageOverride" class="secondary-btn">선택 모델 이미지 원본으로 복원</button></div><div id="imageStatus" class="help-note">기본적으로 계산기의 원본 이미지를 사용합니다.</div></div><div class="panel warn-panel"><h3>운영 방식 안내</h3><p class="settings-text">이 V1.5은 GitHub Pages에서 실행할 수 있는 관리자 웹용입니다. 요금·사진은 원본 계산기 데이터와 연동됩니다. 관리자가 견적에서 직접 수정한 금액, 담당자 등록정보, 이력, 별도 업로드 이미지는 브라우저 저장이므로 PC 간 공유를 위해서는 추후 별도 SK 전용 Google Apps Script/시트 연동이 필요합니다. 기존 쿠쿠 API/구글시트에는 절대 저장하지 않습니다.</p></div></div></section>
+</div></div>
+<div class="modal-backdrop hidden" id="imageModal" role="dialog" aria-modal="true" aria-label="견적서 이미지 미리보기"><div class="image-modal"><div class="modal-head"><div><b>견적서 이미지 미리보기</b><small>이미지를 확인한 뒤 복사해서 카카오톡에 붙여넣으세요.</small></div><button class="icon-button" id="closeModal" aria-label="닫기">×</button></div><div id="modalImageWrap" class="modal-image-wrap"><div class="loading-box">이미지 생성 중…</div></div><div class="modal-page-controls hidden" id="imagePageControls"><button type="button" class="secondary-btn" id="imagePrevPage">이전 장</button><strong id="imagePageLabel">1 / 1</strong><button type="button" class="secondary-btn" id="imageNextPage">다음 장</button></div><div class="modal-footer"><span id="imageCopyStatus">이미지 복사는 HTTPS 페이지에서 지원됩니다.</span><div><button class="secondary-btn" id="downloadImageBtn">PNG 저장</button><button class="primary-btn" id="copyImageBtn">이미지 복사</button></div></div></div></div>
+<div class="toast" id="toast" aria-live="polite"></div>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+<script src="./assets/app.js?v=1.5" defer></script>
+</body></html>
