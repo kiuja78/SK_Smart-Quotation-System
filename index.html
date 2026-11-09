@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f9fafc"><title>SK매직 구독 견적자동화 시스템 | 관리자 V1.7</title>
-<link rel="stylesheet" href="./assets/style.css?v=1.7">
+<meta name="theme-color" content="#f9fafc"><title>SK매직 구독 견적자동화 시스템 | 관리자 V1.7.1</title>
+<link rel="stylesheet" href="./assets/style.css?v=1.7.1-promo-ui">
 </head>
 <body>
 <div class="app-shell">
@@ -21,7 +21,7 @@
     <button class="nav-btn" data-page="history"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="nav-label">견적 이력</span><span class="nav-arrow" aria-hidden="true">›</span></button>
     <button class="nav-btn" data-page="settings"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5h4l.7 2.2 2 1 2.2-.6 2 3.4-1.5 1.8v2.2l1.5 1.8-2 3.4-2.2-.6-2 1L14 21.5h-4l-.7-2.2-2-1-2.2.6-2-3.4 1.5-1.8v-2.2L3.1 9.7l2-3.4 2.2.6 2-1z"/><circle cx="12" cy="12.5" r="2.5"/></svg></span><span class="nav-label">설정 · 백업</span><span class="nav-arrow" aria-hidden="true">›</span></button>
   </nav>
-  <div class="sidebar-bottom"><span class="live-dot"></span><span>SK매직 계산기 연동</span><small>관리자 WEB V1.7</small></div>
+  <div class="sidebar-bottom"><span class="live-dot"></span><span>SK매직 계산기 연동</span><small>관리자 WEB V1.7.1</small></div>
 </aside>
 <div class="app-main">
 <header class="app-top"><div><div class="eyebrow">SK MAGIC · SUBSCRIPTION QUOTATION</div><h1>구독 견적자동화 시스템</h1><p>고객에게 전달할 공식 견적서를 쉽고 정확하게 작성합니다.</p></div><div class="top-tools"><a href="https://kiuja78.github.io/skmagic-product-info/" target="_blank" rel="noopener noreferrer" class="quiet-link">원본 계산기 ↗</a><div class="status-pill" id="sourceState"><span class="spinner"></span> 원본 데이터 연결 중</div></div></header>
@@ -50,16 +50,20 @@
       <label class="check-row"><input type="checkbox" id="specialToggle"><span><b>특판 견적가격 직접 입력</b><small>일반 구독료와 별도로 입력 · 견적서에 특판 표시</small></span></label>
       <div id="specialAmountBox" class="special-box hidden"><div class="two-input"><label>특판 월 구독료<input id="specialAmount" type="number" min="1" step="1" placeholder="금액 직접 입력"></label><label>의무기간 수기 입력(개월)<input id="specialMonths" type="number" min="1" step="1" placeholder="원본 조건 사용"></label></div></div>
       <div class="field-divider"><span>할인프로모션 (선택)</span></div>
-      <label>조건에 해당하는 혜택<select id="promoSelect"><option value="">적용 안 함</option></select></label>
+      <label>조건에 해당하는 혜택<select id="promoSelect"><option value="">적용 안 함</option><option value="manual">✎ 수기 할인프로모션 · 혜택 직접 입력</option></select></label>
       <div class="help-note" id="promoHelp">구독 조건과 고객유형이 일치하는 프로모션만 표시합니다.</div>
-      <div class="manual-promo-box hidden" id="manualPromoBox">
+      <details class="manual-promo-entry" id="manualPromoDetails">
+        <summary><span class="manual-entry-plus" aria-hidden="true">＋</span><span class="manual-entry-title"><b>수기 할인·혜택 직접 입력</b><small>계산기에 혜택이 없어도 직접 추가할 수 있습니다</small></span><span class="manual-entry-open">펼치기</span></summary>
+      <div class="manual-promo-box" id="manualPromoBox">
         <div class="manual-promo-heading"><strong>직접 입력하는 할인 · 혜택</strong><small>기존 계산기 제품 요금은 변경되지 않습니다.</small></div>
         <label>프로모션명 · 혜택 내용<input id="manualPromoName" type="text" maxlength="80" placeholder="예: 6개월 반값 / 필터 무상교체 / 사은품 증정"></label>
         <label>혜택 적용 방식<select id="manualPromoMode"><option value="text">혜택 안내만 (구독료 변동 없음)</option><option value="half">해당 기간 50% 할인 자동 계산</option><option value="amount">해당 기간 월 구독료 직접 입력</option></select></label>
         <div class="two-input manual-promo-amount-row"><label id="manualPromoMonthsWrap" class="hidden">할인 적용기간 (개월)<input id="manualPromoMonths" type="number" min="1" max="240" step="1" placeholder="예: 6"></label><label id="manualPromoPriceWrap" class="hidden">할인기간 월 구독료 (원)<input id="manualPromoPrice" type="number" min="0" step="1" placeholder="예: 21,950"></label></div>
         <label>추가 안내 (선택)<textarea id="manualPromoNote" rows="2" maxlength="160" placeholder="예: 가입 고객 한정 / 주요부품 1년마다 무상교체"></textarea></label>
         <div class="manual-promo-guide" id="manualPromoGuide">안내만 선택하면 견적서에 혜택 내용만 표시하며 금액은 변경되지 않습니다.</div>
+        <div class="manual-promo-usage">입력한 다음 아래 <strong>‘+ 현재 제품을 견적에 추가’</strong> 버튼을 누르면 적용됩니다.</div>
       </div>
+      </details>
       <div class="btn-grid"><button type="button" class="primary-btn" id="addBtn">+ 현재 제품을 견적에 추가</button><button type="button" class="secondary-btn" id="clearBtn">전체 비우기</button></div>
     </section>
     <section class="panel"><div class="panel-head"><div><small>03 · 견적 조정</small><h2>추가된 제품</h2></div><span class="subtle-tag" id="itemCount">0개</span></div><div class="tiny-note">월 구독료·의무기간·점검조건은 견적별로 수정 가능합니다. 원본 계산기 데이터는 변경되지 않습니다.</div><div id="addedItems" class="added-items"><div class="empty-message">추가된 제품이 없습니다.</div></div></section>
@@ -99,5 +103,5 @@
 <div class="toast" id="toast" aria-live="polite"></div>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
-<script src="./assets/app.js?v=1.7" defer></script>
+<script src="./assets/app.js?v=1.7.1-promo-ui" defer></script>
 </body></html>
