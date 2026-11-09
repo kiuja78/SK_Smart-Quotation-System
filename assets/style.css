@@ -655,3 +655,274 @@
 :is(#paper,.export-paper) .first-page .detail-list.two-up .detail-spec-row dt{font-size:10.8px!important}
 :is(#paper,.export-paper) .first-page .detail-list.two-up .detail-spec-row dd{font-size:12.1px!important;line-height:1.46!important}
 :is(#paper,.export-paper) .first-page .detail-list.two-up .compact-feature-list li{font-size:11.7px!important}
+
+
+/* ═══ V1.6 · A4 readability, benefit positioning and total emphasis ═══
+   These rules apply identically to live A4 and cloned PNG/PDF export pages.
+   Retain the comfortable padding used in V1.5; never expand text into margins. */
+:is(#paper,.export-paper) .quote-prices thead th{
+  font-size:11.8px!important;
+  line-height:1.35!important;
+  color:#243d5a!important;
+  font-weight:950!important;
+  padding:10px 4px!important;
+}
+:is(#paper,.export-paper) .quote-prices tbody tr.main-row td{
+  font-size:12.7px!important;
+  line-height:1.42!important;
+  padding:12px 4px!important;
+  color:#22354b!important;
+  font-weight:800!important;
+}
+:is(#paper,.export-paper) .quote-prices .model-name b{
+  font-size:12.7px!important;
+  font-weight:950!important;
+  line-height:1.38!important;
+}
+:is(#paper,.export-paper) .quote-prices .cycle-value{
+  font-size:11.4px!important;
+  font-weight:850!important;
+}
+:is(#paper,.export-paper) .quote-prices .money-normal,
+:is(#paper,.export-paper) .quote-prices .money-discount{
+  font-size:12.7px!important;
+  font-weight:900!important;
+}
+:is(#paper,.export-paper) .quote-prices .money-final b,
+:is(#paper,.export-paper) .quote-prices .money-final .p-editable{
+  color:#095f9f!important;
+  font-size:17.5px!important;
+  font-weight:1000!important;
+  letter-spacing:-.45px!important;
+  white-space:nowrap!important;
+}
+:is(#paper,.export-paper) .quote-prices tr.promo-row td{
+  background:#fff4e9!important;
+  border-left:4px solid #e56930!important;
+}
+:is(#paper,.export-paper) .promo-ribbon{
+  min-height:42px!important;
+  gap:9px!important;
+  padding:8px 11px!important;
+  font-size:12.4px!important;
+  line-height:1.4!important;
+  flex-wrap:wrap!important;
+}
+:is(#paper,.export-paper) .promo-ribbon .promo-tag{font-size:10.8px!important;padding:6px 9px!important}
+:is(#paper,.export-paper) .promo-ribbon .promo-name{
+  font-size:12.2px!important;white-space:normal!important;flex:1 1 145px!important;
+  overflow:visible!important;text-overflow:clip!important;
+}
+:is(#paper,.export-paper) .promo-ribbon .promo-term{font-size:11.8px!important}
+:is(#paper,.export-paper) .promo-ribbon .promo-amount{
+  font-size:12px!important;
+  padding:5px 8px!important;
+  background:white!important;
+  border-color:#ecad75!important;
+}
+:is(#paper,.export-paper) .promo-ribbon .promo-amount b{font-size:14.5px!important;color:#c64417!important}
+:is(#paper,.export-paper) .promo-ribbon .promo-after,
+:is(#paper,.export-paper) .promo-ribbon .promo-after strong{font-size:11.8px!important}
+
+/* Benefits are a single, high-contrast callout immediately BELOW the quote table
+   and ABOVE any monthly quantity/total summary. */
+:is(#paper,.export-paper) .paper-benefit-note{
+  display:flex!important;align-items:flex-start!important;gap:12px!important;
+  background:#fff6ec!important;border:1.5px solid #edbc8a!important;
+  border-left:5px solid #e86d35!important;border-radius:10px!important;
+  padding:11px 13px!important;margin:11px 0 12px!important;
+  break-inside:avoid!important;
+  -webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;
+}
+:is(#paper,.export-paper) .paper-benefit-note .note-label{
+  flex:0 0 auto!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  background:#d95727!important;color:#fff!important;
+  padding:5px 9px!important;border-radius:7px!important;
+  font-size:11.6px!important;font-weight:950!important;
+  white-space:nowrap!important;
+}
+:is(#paper,.export-paper) .paper-benefit-note .note-copy{
+  font-size:14.3px!important;font-weight:900!important;
+  line-height:1.55!important;color:#893813!important;
+  word-break:keep-all!important;overflow-wrap:anywhere!important;
+  white-space:pre-line!important;min-width:0!important;
+}
+:is(#paper,.export-paper) .paper-section-title{
+  font-size:14.5px!important;color:#173e69!important;font-weight:950!important;
+}
+:is(#paper,.export-paper) .qty-summary th{
+  font-size:11.4px!important;font-weight:900!important;
+  padding:8px 7px!important;
+}
+:is(#paper,.export-paper) .qty-summary td{
+  font-size:12.5px!important;font-weight:780!important;
+  padding:8px 7px!important;line-height:1.35!important;
+}
+:is(#paper,.export-paper) .qty-summary .total-row{
+  background:#e0f1fe!important;
+  border-top:2px solid #97caef!important;
+}
+:is(#paper,.export-paper) .qty-summary .total-row td:first-child{
+  font-size:13.6px!important;color:#24517b!important;
+  font-weight:950!important;
+}
+:is(#paper,.export-paper) .qty-summary .total-row td:last-child{
+  font-size:19px!important;color:#075b9c!important;
+  font-weight:1000!important;letter-spacing:-.5px!important;
+  white-space:nowrap!important;
+  padding:10px 7px!important;
+}
+:is(#paper,.export-paper) .commit-summary{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:9px!important;margin:10px 0!important;padding:0!important;
+  background:transparent!important;
+}
+:is(#paper,.export-paper) .commit-card{
+  border:1px solid #c8deed!important;border-radius:10px!important;
+  background:#eef6fd!important;padding:10px 13px!important;
+  min-width:0!important;
+}
+:is(#paper,.export-paper) .commit-card.accent{
+  border-color:#a5cde7!important;background:#e0f1ff!important;
+}
+:is(#paper,.export-paper) .commit-card small{
+  display:block!important;color:#416385!important;
+  font-size:12px!important;font-weight:900!important;line-height:1.35!important;
+}
+:is(#paper,.export-paper) .commit-card b{
+  display:block!important;margin-top:5px!important;
+  color:#125c95!important;font-size:20px!important;
+  line-height:1.3!important;letter-spacing:-.5px!important;
+  font-weight:1000!important;white-space:nowrap!important;
+}
+:is(#paper,.export-paper) .commit-card.accent b{color:#085d9e!important}
+/* Make detail text readable without changing picture-to-text gap or outer A4 margins. */
+:is(#paper,.export-paper) .detail-card-head b{font-size:16.5px!important}
+:is(#paper,.export-paper) .detail-spec-row dt{font-size:11.2px!important}
+:is(#paper,.export-paper) .detail-spec-row dd{font-size:12.5px!important;line-height:1.49!important}
+:is(#paper,.export-paper) .compact-feature-list li{font-size:12px!important;line-height:1.45!important}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .detail-card-head b{font-size:15.8px!important}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .detail-spec-row dt{font-size:11.5px!important}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .detail-spec-row dd{font-size:12.5px!important;line-height:1.48!important}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .compact-feature-list li{font-size:12px!important;line-height:1.45!important}
+:is(#paper,.export-paper) .details-page .detail-card-head b{font-size:19px!important}
+:is(#paper,.export-paper) .details-page .detail-spec-row dt{font-size:12px!important}
+:is(#paper,.export-paper) .details-page .detail-spec-row dd{font-size:13.8px!important;line-height:1.55!important}
+:is(#paper,.export-paper) .details-page .compact-feature-list li{font-size:13.2px!important}
+/* Keep footer and page numbers legible without growing page margins. */
+:is(#paper,.export-paper) .paper-footer{font-size:10.4px!important}
+:is(#paper,.export-paper) .paper-footer strong{font-size:11.4px!important}
+
+/* V1.6 first-page two-product typography-preserving compact reflow.
+   Labels and values share each line, instead of stacking tiny two-line captions. */
+:is(#paper,.export-paper) .first-page .detail-list.two-up .detail-card{
+  padding:11px 12px 12px!important;
+}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .detail-card-head{
+  padding-bottom:6px!important;margin-bottom:7px!important;
+}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .detail-card-body{
+  display:grid!important;
+  grid-template-columns:91px minmax(0,1fr)!important;
+  gap:11px!important;
+  align-items:start!important;
+}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .detail-photo{
+  width:91px!important;height:146px!important;min-height:146px!important;padding:5px!important;
+}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .detail-specs{
+  display:grid!important;grid-template-columns:1fr!important;gap:5px!important;
+}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .detail-spec-row{
+  display:grid!important;grid-template-columns:53px minmax(0,1fr)!important;
+  align-items:start!important;column-gap:6px!important;
+  padding:0 0 4px!important;
+}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .detail-spec-row dt{
+  font-size:11.3px!important;line-height:1.38!important;margin:0!important;
+  color:#22649a!important;font-weight:950!important;
+}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .detail-spec-row dd{
+  font-size:12.2px!important;line-height:1.47!important;
+  color:#1d344d!important;
+}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .compact-feature-list ul{
+  display:block!important;margin:0!important;padding:0!important;
+}
+:is(#paper,.export-paper) .first-page .detail-list.two-up .compact-feature-list li{
+  font-size:11.9px!important;line-height:1.48!important;
+}
+/* 1-product detail also uses space effectively, with larger text. */
+:is(#paper,.export-paper) .first-page .detail-list.single .detail-spec-row dd{
+  font-size:13.2px!important;line-height:1.5!important;
+}
+/* V1.6 — when page 2 contains two products, place the two readable cards
+   side by side rather than scaling two long full-width cards to 76%. */
+:is(#paper,.export-paper) .details-page .detail-list.two-up{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px!important;
+  align-items:start!important;
+}
+:is(#paper,.export-paper) .details-page .detail-list.two-up .detail-card{
+  min-width:0!important;padding:13px 13px 14px!important;
+}
+:is(#paper,.export-paper) .details-page .detail-list.two-up .detail-card-head{
+  display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+  gap:4px!important;
+}
+:is(#paper,.export-paper) .details-page .detail-list.two-up .detail-card-head b{font-size:17px!important}
+:is(#paper,.export-paper) .details-page .detail-list.two-up .detail-card-body{
+  display:grid!important;grid-template-columns:103px minmax(0,1fr)!important;
+  gap:12px!important;align-items:start!important;
+}
+:is(#paper,.export-paper) .details-page .detail-list.two-up .detail-photo{
+  width:103px!important;height:162px!important;min-height:162px!important;padding:5px!important;
+}
+:is(#paper,.export-paper) .details-page .detail-list.two-up .detail-specs{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:5px!important;
+}
+:is(#paper,.export-paper) .details-page .detail-list.two-up .detail-spec-row dt{
+  font-size:11.5px!important;margin:0 0 2px!important;
+}
+:is(#paper,.export-paper) .details-page .detail-list.two-up .detail-spec-row dd{
+  font-size:12.8px!important;line-height:1.43!important;
+}
+:is(#paper,.export-paper) .details-page .detail-list.two-up .compact-feature-list li{
+  font-size:12.2px!important;line-height:1.44!important;
+}
+
+/* V1.7 — 수기 프로모션/혜택: 금액형 및 안내형 분리 */
+.manual-promo-box{margin:11px 0 16px;padding:16px;border:1px solid #efb999;border-radius:15px;background:#fff8f2;box-shadow:0 3px 12px #a75b2209}
+.manual-promo-box .manual-promo-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px 12px;margin-bottom:12px}
+.manual-promo-box .manual-promo-heading strong{font-size:13px;color:#9a431b}
+.manual-promo-box .manual-promo-heading small{font-size:10px;color:#a06c50}
+.manual-promo-box label{color:#754735!important}
+.manual-promo-box .manual-promo-guide{font-size:11px;color:#a95d2a;line-height:1.55;background:#fff;padding:9px 10px;border-radius:9px}
+.manual-promo-box .manual-promo-amount-row{margin-bottom:0}
+.quote-manual-promo-editor{margin-top:12px;border:1px solid #e4c5ae;background:#fffaf6;border-radius:11px;padding:10px 11px}
+.quote-manual-promo-editor summary{font-size:11px;font-weight:900;cursor:pointer;color:#aa4b24;outline:none}
+.quote-manual-promo-editor[open] summary{margin-bottom:10px}
+.quote-manual-promo-editor label{display:block!important;margin:7px 0!important;font-size:10.5px!important;font-weight:850;color:#6d4838}
+.quote-manual-promo-editor input,.quote-manual-promo-editor select{width:100%;min-height:33px;margin-top:4px;border:1px solid #ead7ca;border-radius:8px;background:#fff;padding:6px 8px;font-size:12px}
+.quote-manual-promo-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quote-manual-promo-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:9px}
+.quote-manual-promo-actions button{min-height:34px;padding:7px 12px;font-size:11px}
+:is(#paper,.export-paper) .promo-ribbon .promo-additional-note{flex-basis:100%;display:block;margin-top:3px;color:#96552d!important;font-weight:800;font-size:11px;line-height:1.45;word-break:keep-all}
+
+/* V1.7.1 - 수기 혜택 입력 영역을 항상 발견할 수 있도록 표시 */
+.manual-promo-entry{border:1px solid #f2c1a6;border-radius:13px;background:#fff9f4;margin:12px 0 17px;overflow:hidden}
+.manual-promo-entry>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:11px;padding:13px 14px;background:#fff3ea;color:#9a441d;outline-offset:-3px}
+.manual-promo-entry>summary::-webkit-details-marker{display:none}
+.manual-promo-entry>summary:hover{background:#ffede0}
+.manual-promo-entry[open]>summary{border-bottom:1px solid #f2c1a6;background:#ffedde}
+.manual-entry-plus{display:grid;place-items:center;width:31px;height:31px;flex-shrink:0;border-radius:9px;background:#e86d37;color:#fff;font-size:23px;font-weight:750;line-height:1}
+.manual-entry-title{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.manual-entry-title>b{font-size:13px;font-weight:950;color:#963d1b}
+.manual-entry-title>small{font-size:10.5px;line-height:1.3;font-weight:720;color:#9a6a54}
+.manual-entry-open{font-size:10px;font-weight:900;white-space:nowrap;color:#b45d34}
+.manual-promo-entry[open] .manual-entry-open{font-size:0}
+.manual-promo-entry[open] .manual-entry-open:after{content:'접기';font-size:10px}
+.manual-promo-entry .manual-promo-box{margin:0!important;border:0!important;box-shadow:none!important;border-radius:0!important;background:#fffbf8!important;padding:14px!important}
+.manual-promo-usage{font-size:11px;line-height:1.55;color:#99431b;margin-top:10px;font-weight:760}
+.manual-promo-usage strong{color:#b73320}

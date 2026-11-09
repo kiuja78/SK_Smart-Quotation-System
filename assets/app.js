@@ -1,4 +1,4 @@
-/* SK매직 견적자동화 관리자 WEB V1.4
+/* SK매직 견적자동화 관리자 WEB V1.7.1
    계산기 원본 데이터(월별 제품/계약/프로모션/이미지)를 읽고,
    견적 및 수기 수정은 별도로 관리합니다. 기존 CUCKOO API와 연결하지 않습니다. */
 (() => {
@@ -27,7 +27,7 @@
   const supplierDefaults={name:'SK인텔리스(주)',number:'104-86-48203',ceo:'안무인',address:'서울특별시 종로구 청계천로 85, 18층(관철동, 삼일빌딩)',type:'도소매',category:'전자, 전기제품'};
   let supplier={...supplierDefaults};
   let imageOverrides=new Map(),activeCanvas=null,toastTimer=null,saveTimer=null;
-  let form={customer:'',date:dateText(),manager:'',phone:'',managerId:'',month:'',category:'전체',search:'',productId:'',customerType:'신규',quantity:1,special:false,specialAmount:'',specialMonths:'',promoIndex:'',showMonthly:true,showCommit:true,showImages:true,showDetails:true,note:''};
+  let form={customer:'',date:dateText(),manager:'',phone:'',managerId:'',month:'',category:'전체',search:'',productId:'',customerType:'신규',quantity:1,special:false,specialAmount:'',specialMonths:'',promoIndex:'',manualPromoName:'',manualPromoMode:'text',manualPromoMonths:'',manualPromoPrice:'',manualPromoNote:'',showMonthly:true,showCommit:true,showImages:true,showDetails:true,note:''};
   function notify(text){const node=$('toast');node.textContent=text;node.classList.add('active');clearTimeout(toastTimer);toastTimer=setTimeout(()=>node.classList.remove('active'),3000)}
   function alertBanner(text){$('globalAlert').textContent=text;$('globalAlert').classList.toggle('visible',!!text)}
   function store(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify({form,quotes}));localStorage.setItem(MANAGER_KEY,JSON.stringify(managers));localStorage.setItem(SUPPLIER_KEY,JSON.stringify(supplier));$('draftState').textContent='이 브라우저에 저장됨'}catch(e){$('draftState').textContent='저장 실패 · 백업 필요';console.warn(e)}},180)}
@@ -160,19 +160,79 @@
   }
   function matchPromos(){const p=currentProduct(),rate=findRow();if(!p||!rate||form.special||form.customerType==='특판')return [];
     const promoData=currentSnap?.promotions;const list=Array.isArray(promoData?.entries)?promoData.entries:(Array.isArray(promoData)?promoData:[]);return list.filter(pr=>(pr.apiIds||[]).some(id=>same(id,p.apiId))&&promoMatches(pr,rate,form.customerType));}
-  function renderPromos(){const matches=matchPromos();$('promoSelect').innerHTML='<option value="">적용 안 함</option>'+matches.map((p,i)=>`<option value="${i}">${escapeHtml(p.promoName||p.group||'프로모션')} · ${p.discountMonths?`${p.discountMonths}개월 ${won(p.promoPrice)}`:`월 ${won(p.promoPrice)}`}</option>`).join('');
-    if(form.promoIndex!==''&&!(Number(form.promoIndex)>=0&&Number(form.promoIndex)<matches.length))form.promoIndex='';$('promoSelect').value=form.promoIndex;
-    $('promoHelp').textContent=matches.length?`선택 계약과 일치하는 혜택 ${matches.length}개 · 적용 안 함 선택 가능`:'현재 선택한 조건에 확인된 할인프로모션이 없습니다.';}
-  function getPromoSnapshot(){if(form.promoIndex==='')return null;const p=matchPromos()[Number(form.promoIndex)];if(!p)return null;return {name:p.promoName||p.group||'할인프로모션',months:Number(p.discountMonths||0),intro:toNum(p.promoPrice),after:toNum(p.priceAfterDiscount||p.basePriceInPromo||0),note:String(p.note||''),customerType:p.customerType||'',source:p.promoSourceId||''};}
+  // V1.7: 계산기 등록 프로모션이 없어도 제품별 수기 혜택을 생성할 수 있습니다.
+  function renderManualPromoFields(){
+    const active=form.promoIndex==='manual';
+    const details=$('manualPromoDetails');
+    if(details && details.open!==active)details.open=active;
+    // 입력 필드는 항상 DOM에 남기고, 접기/펼치기는 브라우저 기본 details로 처리합니다.
+    const mode=['text','half','amount'].includes(form.manualPromoMode)?form.manualPromoMode:'text';
+    $('manualPromoMode').value=mode;
+    $('manualPromoMonthsWrap').classList.toggle('hidden',mode==='text');
+    $('manualPromoPriceWrap').classList.toggle('hidden',mode!=='amount');
+    $('manualPromoGuide').textContent=mode==='text'
+      ? '견적서에 혜택 문구만 표시하며 구독료와 의무기간 총액은 변동되지 않습니다.'
+      : mode==='half'
+        ? '선택한 견적구독료의 50%를 할인기간 월 구독료로 계산하고, 이후에는 원래 견적구독료가 적용됩니다.'
+        : '할인기간 월 구독료를 직접 입력하며, 이후에는 기존 견적구독료가 적용됩니다.';
+  }
+  function renderPromos(){
+    const matches=matchPromos();
+    $('promoSelect').innerHTML='<option value="">적용 안 함</option>'
+      +matches.map((p,i)=>`<option value="${i}">${escapeHtml(p.promoName||p.group||'프로모션')} · ${p.discountMonths?`${p.discountMonths}개월 ${won(p.promoPrice)}`:`월 ${won(p.promoPrice)}`}</option>`).join('')
+      +'<option value="manual">✎ 수기 할인프로모션 · 혜택 직접 입력</option>';
+    if(form.promoIndex!==''&&form.promoIndex!=='manual'&&!(Number(form.promoIndex)>=0&&Number(form.promoIndex)<matches.length))form.promoIndex='';
+    $('promoSelect').value=form.promoIndex;
+    $('promoHelp').textContent=matches.length
+      ? `등록된 혜택 ${matches.length}개 · 목록에 없는 혜택도 수기로 입력 가능`
+      : '계산기에 등록된 혜택이 없어도 수기 프로모션을 작성할 수 있습니다.';
+    renderManualPromoFields();
+  }
+  function manualPromotion(name,mode,months,price,note,basePrice,termMonths){
+    const title=String(name||'').trim();
+    const extra=String(note||'').trim();
+    if(!title){notify('수기 프로모션명을 입력해주세요.');return null;}
+    if(!['text','half','amount'].includes(mode)){notify('혜택 적용 방식을 선택해주세요.');return null;}
+    const amount=Number(basePrice)||0;
+    let duration=0,intro=amount;
+    if(mode!=='text'){
+      if(String(months??'').trim()===''||!Number.isInteger(Number(months))||Number(months)<1||Number(months)>240){notify('할인 적용기간을 1~240개월로 입력해주세요.');return null;}
+      duration=Number(months);
+      if(Number.isFinite(Number(termMonths))&&termMonths>0&&duration>termMonths){notify('할인기간이 의무기간보다 길 수 없습니다.');return null;}
+      if(mode==='half')intro=Math.round(amount/2);
+      else {
+        if(String(price??'').trim()===''||!/^(?:0|[1-9]\d*)$/.test(String(price).trim())){notify('할인기간 월 구독료를 0원 이상으로 입력해주세요.');return null;}
+        intro=Number(price);
+        if(intro>amount){notify('할인기간 금액은 견적구독료보다 클 수 없습니다.');return null;}
+      }
+    }
+    return {name:title.slice(0,80),months:duration,intro,after:amount,note:extra.slice(0,160),source:'manual',mode,informational:mode==='text'};
+  }
+  function getPromoSnapshot(basePrice,termMonths){
+    if(form.promoIndex==='')return null;
+    if(form.promoIndex==='manual')return manualPromotion(form.manualPromoName,form.manualPromoMode,form.manualPromoMonths,form.manualPromoPrice,form.manualPromoNote,basePrice,termMonths);
+    const p=matchPromos()[Number(form.promoIndex)];if(!p)return null;
+    return {name:p.promoName||p.group||'할인프로모션',months:Number(p.discountMonths||0),intro:toNum(p.promoPrice),after:toNum(p.priceAfterDiscount||p.basePriceInPromo||0),note:String(p.note||''),customerType:p.customerType||'',source:p.promoSourceId||''};
+  }
   function addItem(){const product=currentProduct(),rate=findRow();const special=form.special||form.customerType==='특판';if(!product||(!rate&&!special)){notify('제품과 계약조건을 먼저 선택해주세요.');return;}const amount=special?toNum(form.specialAmount):priceOfRate(rate,form.customerType);
     if(!(amount>0)){notify('선택한 조건의 가격이 확인되지 않았습니다. 특판 금액을 입력해주세요.');return;}
     const count=Math.max(1,Math.floor(Number(form.quantity||1)));const termMonths=toNum(form.specialMonths)>0&&special?Math.floor(toNum(form.specialMonths)):Number(rate?.contractYears||0)*12;if(!termMonths){notify('특판 의무기간을 개월 단위로 입력해주세요.');return;}
-    const promotion=getPromoSnapshot();
-    const afterPrice=promotion&&promotion.months>0&&promotion.after>0?promotion.after:(promotion&&promotion.months===0&&promotion.intro>0?promotion.intro:amount);
+    const promotion=getPromoSnapshot(amount,termMonths);
+    if(form.promoIndex==='manual'&&!promotion)return;
+    // 수기 혜택은 견적구독료(프로모션 종료 후 금액)를 절대 덮어쓰지 않습니다.
+    const afterPrice=promotion?.source==='manual'?amount
+      :(promotion&&promotion.months>0&&promotion.after>0?promotion.after:(promotion&&promotion.months===0&&promotion.intro>0?promotion.intro:amount));
     const imageKey=form.month+'|'+product.model;
     const data={id:crypto.randomUUID?crypto.randomUUID():'q'+Date.now()+Math.random().toString(16).slice(2),month:form.month,apiId:product.apiId,model:product.model,title:product.title,category:product.category,image:productImageCandidates(product)[0]||'',imageKey,detailUrl:product.officialDetailUrl||'',spec:product.spec||'',features:product.features||'',gallery:productImageCandidates(product).slice(0,5),normalPrice:normalSubscriptionOf(product,rate,form.month),basePrice:afterPrice,monthly:afterPrice,qty:count,years:termMonths/12,months:termMonths,management:rate?.management||'',cycle:rate?.visitCycleMonths==null?'':valText('visitCycleMonths',rate.visitCycleMonths),size:rate?.size||'',plan:rate?.plan||'',variant:rate?.variant||'',customerType:special?'특판':form.customerType,special,promo:promotion,promoOn:!!promotion,promoMonthlyOverride:null};
     quotes.push(data);renderItems();renderPaper();store();notify(`${product.model} 견적에 추가했습니다.`);}
-  function promoFirstMonthly(q){if(!q.promo||!q.promoOn)return q.monthly;const promo=q.promo;return (q.promoMonthlyOverride!==null&&q.promoMonthlyOverride!==undefined)?Math.max(0,Number(q.promoMonthlyOverride)):Math.max(0,(promo.intro!==null&&promo.intro!==undefined&&Number.isFinite(Number(promo.intro)))?Number(promo.intro):Math.round(q.monthly/2));}
+  function promoFirstMonthly(q){
+    if(!q.promo||!q.promoOn||q.promo.informational)return Number(q.monthly)||0;
+    if(q.promoMonthlyOverride!==null&&q.promoMonthlyOverride!==undefined)return Math.max(0,Number(q.promoMonthlyOverride));
+    if(q.promo.source==='manual'&&q.promo.mode==='half')return Math.round((Number(q.monthly)||0)/2);
+    if(q.promo.source==='manual'&&q.promo.mode==='amount')return Math.min(Number(q.monthly)||0,Math.max(0,Number(q.promo.intro)||0));
+    const intro=q.promo.intro;
+    return Math.max(0,(intro!==null&&intro!==undefined&&Number.isFinite(Number(intro)))?Number(intro):Math.round(q.monthly/2));
+  }
   function promoAfterMonthly(q){return Number(q.monthly)||0;}
   function normalOfQuote(q){if(Object.prototype.hasOwnProperty.call(q,'normalPrice'))return toNum(q.normalPrice);
     const source=archive[q.month];const product=(source?.products||[]).find(p=>String(p.apiId)===String(q.apiId));
@@ -180,11 +240,20 @@
     const rate=rates.find(r=>Number(r.contractYears)*12===Number(q.months)&&String(r.management||'')===String(q.management||''))||rates.find(r=>String(r.management||'')===String(q.management||''))||rates[0]||null;
     return normalSubscriptionOf(product,rate,q.month)||0;}
   function normalDisplay(q){const n=normalOfQuote(q);return n>0?won(n):'—'}
-  function totalFor(q){const months=Math.max(0,Number(q.months)||0),qty=Math.max(1,Number(q.qty)||1);if(!(q.promo&&q.promoOn))return months*Number(q.monthly||0)*qty;const n=Math.min(months,Math.max(0,Number(q.promo.months)||0));if(!n)return Number(q.promo.intro||q.monthly)*months*qty;
+  function totalFor(q){const months=Math.max(0,Number(q.months)||0),qty=Math.max(1,Number(q.qty)||1);if(!(q.promo&&q.promoOn)||q.promo.informational)return months*Number(q.monthly||0)*qty;const n=Math.min(months,Math.max(0,Number(q.promo.months)||0));if(!n)return Number(q.promo.intro||q.monthly)*months*qty;
     return (promoFirstMonthly(q)*n+promoAfterMonthly(q)*(months-n))*qty;}
   function renderItems(){const box=$('addedItems');$('itemCount').textContent=`${quotes.length}개`;
     if(!quotes.length){box.innerHTML='<div class="empty-message">추가된 제품이 없습니다.</div>';return;}
-    box.innerHTML=quotes.map((q,i)=>`<div class="added-card" data-index="${i}"><div class="added-card-top"><div><b>${i+1}. ${escapeHtml(q.title||q.model)}</b><small>${escapeHtml(q.model)} · ${escapeHtml(q.month)} · ${escapeHtml(q.customerType)}</small></div><button class="remove-btn" data-remove="${i}">삭제</button></div><div class="added-grid"><label>견적구독료<input data-edit="monthly" type="number" min="0" value="${Number(q.monthly)||0}"></label><label>의무기간(개월)<input data-edit="months" type="number" min="0" value="${Number(q.months)||0}"></label><label>수량<input data-edit="qty" type="number" min="1" value="${Number(q.qty)||1}"></label></div><div class="added-grid added-grid-four"><label>정상구독료<input data-edit="normalPrice" type="number" min="0" value="${normalOfQuote(q)||0}"></label><label>관리방식<input data-edit="management" value="${escapeHtml(q.management)}"></label><label>점검주기<input data-edit="cycle" value="${escapeHtml(q.cycle)}"></label><label>구독유형<input data-edit="customerType" value="${escapeHtml(q.customerType)}"></label></div>${q.promo?`<label class="mini-promo"><span>${escapeHtml(q.promo.name)} · ${q.promo.months||'-'}개월</span><span><input type="checkbox" data-edit="promoOn" ${q.promoOn?'checked':''}> 적용</span></label>`:''}</div>`).join('');}
+    box.innerHTML=quotes.map((q,i)=>`<div class="added-card" data-index="${i}"><div class="added-card-top"><div><b>${i+1}. ${escapeHtml(q.title||q.model)}</b><small>${escapeHtml(q.model)} · ${escapeHtml(q.month)} · ${escapeHtml(q.customerType)}</small></div><button class="remove-btn" data-remove="${i}">삭제</button></div><div class="added-grid"><label>견적구독료<input data-edit="monthly" type="number" min="0" value="${Number(q.monthly)||0}"></label><label>의무기간(개월)<input data-edit="months" type="number" min="0" value="${Number(q.months)||0}"></label><label>수량<input data-edit="qty" type="number" min="1" value="${Number(q.qty)||1}"></label></div><div class="added-grid added-grid-four"><label>정상구독료<input data-edit="normalPrice" type="number" min="0" value="${normalOfQuote(q)||0}"></label><label>관리방식<input data-edit="management" value="${escapeHtml(q.management)}"></label><label>점검주기<input data-edit="cycle" value="${escapeHtml(q.cycle)}"></label><label>구독유형<input data-edit="customerType" value="${escapeHtml(q.customerType)}"></label></div>${q.promo?`<label class="mini-promo"><span>${escapeHtml(q.promo.name)}${q.promo.months?` · ${q.promo.months}개월`:''}${q.promo.source==='manual'?' · 직접 입력':''}</span><span><input type="checkbox" data-edit="promoOn" ${q.promoOn?'checked':''}> 적용</span></label>`:''}
+      <details class="quote-manual-promo-editor"><summary>✎ 프로모션 수기 추가 · 수정</summary>
+        <label>혜택명<input data-qp-field="name" type="text" maxlength="80" value="${escapeHtml(q.promo?.source==='manual'?q.promo.name:'')}" placeholder="예: 3개월 반값 / 필터 무상교체"></label>
+        <label>적용 방식<select data-qp-field="mode"><option value="text" ${q.promo?.mode==='text'||q.promo?.source!=='manual'?'selected':''}>혜택 안내만</option><option value="half" ${q.promo?.mode==='half'?'selected':''}>일정기간 반값</option><option value="amount" ${q.promo?.mode==='amount'?'selected':''}>일정기간 구독료 직접 입력</option></select></label>
+        <div class="quote-manual-promo-fields"><label>기간(개월)<input data-qp-field="months" type="number" min="1" max="240" step="1" value="${q.promo?.source==='manual'&&q.promo.mode!=='text'?Number(q.promo.months)||'':''}" placeholder="예: 3"></label>
+        <label>할인기간 월 구독료<input data-qp-field="price" type="number" min="0" step="1" value="${q.promo?.source==='manual'&&q.promo.mode==='amount'?Number(q.promo.intro):''}" placeholder="예: 0"></label></div>
+        <label>추가 안내<input data-qp-field="note" maxlength="160" value="${escapeHtml(q.promo?.source==='manual'?q.promo.note||'':'')}" placeholder="선택 입력"></label>
+        <div class="quote-manual-promo-actions"><button type="button" class="secondary-btn" data-qp-save="${i}">수기 혜택 적용</button><button type="button" class="secondary-btn" data-qp-clear="${i}">혜택 제외</button></div>
+      </details>
+      </div>`).join('');}
   function calculateTotals(){const normalMonthly=quotes.reduce((sum,q)=>sum+q.monthly*q.qty,0),firstMonthly=quotes.reduce((sum,q)=>sum+promoFirstMonthly(q)*q.qty,0),obligation=quotes.reduce((sum,q)=>sum+q.monthly*q.months*q.qty,0),actual=quotes.reduce((sum,q)=>sum+totalFor(q),0);return {normalMonthly,firstMonthly,obligation,actual,discount:Math.max(0,obligation-actual)};}
   function detailSpecParts(q){
     const spec=String(q.spec||'').replace(/\s*\n\s*/g,' / ').trim();
@@ -254,7 +323,7 @@
       <td class="money-discount"><span class="p-editable monetary" contenteditable="true" spellcheck="false" data-paper-edit="discountPrice" data-index="${i}" title="할인구독료 직접 수정">${saving!==null?won(saving):'—'}</span></td>
       <td class="money-final"><b><span class="p-editable monetary" contenteditable="true" spellcheck="false" data-paper-edit="monthly" data-index="${i}" title="반값 종료 후 견적구독료 수정">${won(after)}</span></b></td>
     </tr>
-    ${promotion?`<tr class="promo-row"><td colspan="7"><div class="promo-ribbon"><span class="promo-tag">할인프로모션</span><span class="promo-name">${escapeHtml(q.promo.name)}</span>${q.promo.months?`<span class="promo-term">${q.promo.months}개월간</span><span class="promo-amount">월 <b class="p-editable monetary" contenteditable="true" spellcheck="false" data-paper-edit="promoMonthlyOverride" data-index="${i}">${won(intro)}</b></span>`:''}<span class="promo-after">종료 후 월 <strong>${won(after)}</strong></span></div></td></tr>`:''}`;
+    ${promotion?`<tr class="promo-row"><td colspan="7"><div class="promo-ribbon"><span class="promo-tag">${q.promo.informational?'추가 혜택':'할인프로모션'}</span><span class="promo-name">${escapeHtml(q.promo.name)}</span>${q.promo.informational?'':q.promo.months?`<span class="promo-term">${q.promo.months}개월간</span><span class="promo-amount">월 <b class="p-editable monetary" contenteditable="true" spellcheck="false" data-paper-edit="promoMonthlyOverride" data-index="${i}">${won(intro)}</b></span>`:''}${q.promo.informational?'':`<span class="promo-after">종료 후 월 <strong>${won(after)}</strong></span>`}${q.promo.note?`<span class="promo-additional-note">${escapeHtml(q.promo.note)}</span>`:''}</div></td></tr>`:''}`;
   }
   function fitPaperContent(){
     const paper=$('paper');if(!paper)return;
@@ -286,9 +355,13 @@
       const style=getComputedStyle(pg);
       const padTop=parseFloat(style.paddingTop)||0;
       const padBottom=parseFloat(style.paddingBottom)||0;
-      const footerReserve=pg.querySelector('.paper-footer') ? 47 : 0;
-      const pageReserve=pg.querySelector('.paper-page-number') ? 19 : 0;
-      const available=pg.clientHeight-padTop-padBottom-footerReserve-pageReserve-8;
+      // V1.6: footer is absolutely positioned *inside* the reserved bottom area.
+      // Do not subtract both bottom padding and footer height again (it forced
+      // unnecessary 20% font downscaling even when ample page space remained).
+      const footer=pg.querySelector('.paper-footer');
+      const footerBottom=footer ? (parseFloat(getComputedStyle(footer).bottom)||0) : 0;
+      const footerSpace=footer ? footer.offsetHeight+footerBottom+10 : padBottom+8;
+      const available=pg.clientHeight-padTop-footerSpace;
       const content=body.scrollHeight;
       if (content>available && available>0) {
         // 너무 작은 글씨가 되지 않도록 적정 범위만 축소합니다.
@@ -316,10 +389,16 @@
         <div class="p-business-box"><div class="biz-row"><b>사업자등록번호</b><span title="${escapeHtml(company.number||'-')}">${escapeHtml(company.number||'-')}</span><b>대표이사</b><span title="${escapeHtml(company.ceo||'-')}">${escapeHtml(company.ceo||'-')}</span></div><div class="biz-row full"><b>상호</b><span title="${escapeHtml(company.name||'-')}">${escapeHtml(company.name||'-')}</span></div><div class="biz-row full"><b>주소</b><span title="${escapeHtml(company.address||'-')}">${escapeHtml(company.address||'-')}</span></div><div class="biz-row"><b>업태</b><span title="${escapeHtml(company.type||'-')}">${escapeHtml(company.type||'-')}</span><b>종목</b><span title="${escapeHtml(company.category||'-')}">${escapeHtml(company.category||'-')}</span></div><div class="biz-row manager"><b>담당자</b><span title="${escapeHtml(form.manager||'-')}">${escapeHtml(form.manager||'-')}</span><b>연락처</b><span title="${escapeHtml(form.phone||'-')}">${escapeHtml(form.phone||'-')}</span></div></div>
       </div>`;
     const tableHtml = quotes.length?`<div class="quote-table-section"><table class="paper-table quote-prices"><colgroup><col style="width:16%"><col style="width:11%"><col style="width:17%"><col style="width:12%"><col style="width:14%"><col style="width:14%"><col style="width:16%"></colgroup><thead><tr><th>모델명</th><th>의무기간</th><th>점검조건</th><th>등록·설치비</th><th>정상구독료</th><th>할인구독료</th><th>견적구독료</th></tr></thead><tbody>${quotes.map(paperRow).join('')}</tbody></table></div>`:'<div class="empty-paper">왼쪽에서 제품과 계약조건을 선택해<br>견적에 추가해주세요.</div>';
-    const monthlyHtml = quotes.length&&form.showMonthly?`<div class="monthly-summary"><div class="paper-section-title"><span>수량별 월 총 구독료</span></div><table class="paper-table qty-summary"><thead><tr><th>모델명</th><th>수량</th><th>월 구독료</th><th>월 합계</th></tr></thead><tbody>${quotes.map(q=>`<tr><td>${escapeHtml(q.model)}</td><td>${q.qty}대</td><td>${won(q.monthly)}</td><td>${won(q.monthly*q.qty)}</td></tr>`).join('')}<tr class="total-row"><td colspan="3">월 구독료 합계 (프로모션 종료 후)</td><td>${won(t.normalMonthly)}</td></tr></tbody></table></div>`:'';
+    const monthlyHtml = quotes.length&&form.showMonthly?`<div class="monthly-summary"><div class="paper-section-title"><span>수량별 월 총 구독료</span></div><table class="paper-table qty-summary"><thead><tr><th>모델명</th><th>수량</th><th>월 구독료</th><th>월 합계</th></tr></thead><tbody>${quotes.map(q=>`<tr><td>${escapeHtml(q.model)}</td><td>${q.qty}대</td><td>${won(q.monthly)}</td><td>${won(q.monthly*q.qty)}</td></tr>`).join('')}<tr class="total-row"><td colspan="3">월 총 구독료 (프로모션 종료 후)</td><td>${won(t.normalMonthly)}</td></tr></tbody></table></div>`:'';
     const commitHtml = quotes.length&&form.showCommit?`<div class="commit-summary"><div class="commit-card"><small>의무기간 기준 총 구독료</small><b>${won(t.obligation)}</b></div><div class="commit-card accent"><small>프로모션 반영 예상 총액</small><b>${won(t.actual)}</b></div></div>`:'';
-    const importantNoteHtml = quotes.length&&form.note&&/무상.*교체|무료.*교체/.test(form.note)?`<div class="paper-important-note">${escapeHtml(form.note)}</div>`:'';
-    const etcNoteHtml = form.note&&!/무상.*교체|무료.*교체/.test(form.note)?`<div class="paper-note"><b>특이사항</b> ${escapeHtml(form.note)}</div>`:'';
+    // V1.6: 프로모션·혜택 등 특이사항을 견적표 바로 아래에서 강조합니다.
+    // 문구를 임의로 가공하지 않고 입력 내용 그대로 표시합니다.
+    const hasBenefitNote = /혜택|할인|무상|무료|면제|지원|교체|증정|반값|특가/.test(String(form.note||''));
+    const noteHtml = String(form.note||'').trim()
+      ? `<section class="paper-benefit-note" aria-label="혜택 및 특이사항">
+          <span class="note-label">${hasBenefitNote?'혜택 · 특이사항':'특이사항'}</span>
+          <div class="note-copy">${escapeHtml(String(form.note).trim())}</div>
+        </section>` : '';
     const footerHtml = `<div class="paper-footer"><span>본 견적은 발행일 기준이며 프로모션 및 재고 상황에 따라 변경될 수 있습니다.</span><strong>문의 | ${escapeHtml(form.manager||'담당자')} ${escapeHtml(form.phone||'')}</strong></div>`;
 
     // 견적 금액 표는 1장에 모아서 보여주되, 상세정보는 1장부터 2개씩 배치합니다.
@@ -329,7 +408,7 @@
     const compactDetails = (items, onFirst) => form.showDetails && items.length
       ? `<div class="details-wrap ${onFirst?'first-details':'continued-details'}">${detailCardsHtml(items, items.length===1?'single':'two')}</div>` : '';
     const firstDetails = compactDetails(quotes.slice(0,2), true);
-    const firstPage = `<div class="paper-page first-page"><div class="paper-main-content">${headerHtml}${tableHtml}${monthlyHtml}${commitHtml}${importantNoteHtml}${firstDetails}${etcNoteHtml}</div>${footerHtml}${pageNumber(1)}</div>`;
+    const firstPage = `<div class="paper-page first-page"><div class="paper-main-content">${headerHtml}${tableHtml}${noteHtml}${monthlyHtml}${commitHtml}${firstDetails}</div>${footerHtml}${pageNumber(1)}</div>`;
     const continuations = [];
     if (form.showDetails && quotes.length > 2) {
       let pageNo=2;
@@ -379,8 +458,8 @@
   function renderSavedManagerUI(){renderManagerSelect();renderManagerList();syncSupplierInputs();}
   function renderHistory(){$('historyList').innerHTML=history.length?history.map((h,i)=>`<div class="history-entry"><div><b>${escapeHtml(h.customer||'고객님')} · ${escapeHtml(h.date||'')} · ${h.quotes?.length||0}개 모델</b><small>${escapeHtml(h.savedAt||'')} · 담당자 ${escapeHtml(h.manager||'')}</small></div><div><button data-history-load="${i}">불러오기</button> <button data-history-delete="${i}">삭제</button></div></div>`).join(''):'<div class="empty-message">저장된 견적 이력이 없습니다.</div>'}
 
-  function syncFormInputs(){const ids={customerName:'customer',quoteDate:'date',managerName:'manager',managerPhone:'phone',searchInput:'search',quantityInput:'quantity',specialAmount:'specialAmount',specialMonths:'specialMonths',customNote:'note'};for(const [id,key] of Object.entries(ids)){$(id).value=form[key]??'';}
-    $('showMonthly').checked=!!form.showMonthly;$('showCommit').checked=!!form.showCommit;$('showImages').checked=!!form.showImages;$('showDetails').checked=!!form.showDetails;$('specialToggle').checked=!!form.special;}
+  function syncFormInputs(){const ids={customerName:'customer',quoteDate:'date',managerName:'manager',managerPhone:'phone',searchInput:'search',quantityInput:'quantity',specialAmount:'specialAmount',specialMonths:'specialMonths',manualPromoName:'manualPromoName',manualPromoMonths:'manualPromoMonths',manualPromoPrice:'manualPromoPrice',manualPromoNote:'manualPromoNote',customNote:'note'};for(const [id,key] of Object.entries(ids)){$(id).value=form[key]??'';}
+    $('showMonthly').checked=!!form.showMonthly;$('showCommit').checked=!!form.showCommit;$('showImages').checked=!!form.showImages;$('showDetails').checked=!!form.showDetails;$('specialToggle').checked=!!form.special;$('manualPromoMode').value=form.manualPromoMode||'text';}
   function setupEditorAccordions(){
     const panels=[...document.querySelectorAll('#page-write .editor-column > .panel')];
     panels.forEach((panel,i)=>{
@@ -430,10 +509,44 @@
     $('quantityInput').addEventListener('input',e=>{form.quantity=Math.min(999,Math.max(1,Number(e.target.value)||1));store()});
     $('specialToggle').addEventListener('change',e=>{form.special=e.target.checked;renderPrice();store()});
     $('specialAmount').addEventListener('input',e=>{form.specialAmount=e.target.value;renderPrice();store()});$('specialMonths').addEventListener('input',e=>{form.specialMonths=e.target.value;renderPrice();store()});
-    $('promoSelect').addEventListener('change',e=>{form.promoIndex=e.target.value;store()});
+    $('promoSelect').addEventListener('change',e=>{form.promoIndex=e.target.value;renderManualPromoFields();store()});
+    // 수기 혜택은 드롭다운에 의존하지 않고 항상 보이는 접기/펼치기 영역으로도 접근합니다.
+    $('manualPromoDetails').addEventListener('toggle',e=>{
+      const open=e.currentTarget.open;
+      if(open && form.promoIndex!=='manual'){
+        form.promoIndex='manual';
+        const select=$('promoSelect');
+        if(!select.querySelector('option[value="manual"]')){
+          select.insertAdjacentHTML('beforeend','<option value="manual">✎ 수기 할인프로모션 · 혜택 직접 입력</option>');
+        }
+        select.value='manual';
+        store();
+      }else if(!open && form.promoIndex==='manual'){
+        form.promoIndex='';
+        $('promoSelect').value='';
+        store();
+      }
+    });
+    $('manualPromoMode').addEventListener('change',e=>{form.manualPromoMode=e.target.value;renderManualPromoFields();store()});
+    for(const [id,key] of [['manualPromoName','manualPromoName'],['manualPromoMonths','manualPromoMonths'],['manualPromoPrice','manualPromoPrice'],['manualPromoNote','manualPromoNote']]){
+      $(id).addEventListener('input',e=>{form[key]=e.target.value;store()});
+    }
     $('addBtn').addEventListener('click',addItem);
     $('clearBtn').addEventListener('click',()=>{if(!quotes.length||confirm('현재 견적의 모든 모델을 삭제할까요?')){quotes=[];renderItems();renderPaper();store()}});
-    $('addedItems').addEventListener('click',e=>{const b=e.target.closest('[data-remove]');if(!b)return;quotes.splice(Number(b.dataset.remove),1);renderItems();renderPaper();store();});
+    $('addedItems').addEventListener('click',e=>{
+      const save=e.target.closest('[data-qp-save]');
+      const clear=e.target.closest('[data-qp-clear]');
+      if(save){
+        const i=Number(save.dataset.qpSave),q=quotes[i],card=save.closest('[data-index]');if(!q||!card)return;
+        const value=key=>card.querySelector(`[data-qp-field="${key}"]`)?.value||'';
+        const custom=manualPromotion(value('name'),value('mode'),value('months'),value('price'),value('note'),Number(q.monthly)||0,Number(q.months)||0);
+        if(!custom)return;
+        q.promo=custom;q.promoOn=true;q.promoMonthlyOverride=null;
+        renderItems();renderPaper();store();notify('선택 제품의 수기 프로모션을 적용했습니다.');return;
+      }
+      if(clear){const q=quotes[Number(clear.dataset.qpClear)];if(!q)return;q.promo=null;q.promoOn=false;q.promoMonthlyOverride=null;renderItems();renderPaper();store();notify('선택 제품의 프로모션을 제외했습니다.');return;}
+      const b=e.target.closest('[data-remove]');if(!b)return;quotes.splice(Number(b.dataset.remove),1);renderItems();renderPaper();store();
+    });
     $('addedItems').addEventListener('change',e=>{const el=e.target.closest('[data-edit]');if(!el)return;const container=el.closest('[data-index]');if(!container)return;editQuote(Number(container.dataset.index),el.dataset.edit,el.type==='checkbox'?el.checked:el.value);});
     $('paper').addEventListener('focusin',e=>{const el=e.target.closest('[data-paper-edit]');if(!el)return;const range=document.createRange();range.selectNodeContents(el);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);});
     $('paper').addEventListener('keydown',e=>{if(!e.target.closest('[data-paper-edit]'))return;if(e.key==='Enter'){e.preventDefault();e.target.blur()}if(e.key==='Escape'){e.preventDefault();renderPaper()}});
@@ -444,7 +557,7 @@
     $('saveHistoryBtn').addEventListener('click',()=>{if(!quotes.length){notify('저장할 견적 모델이 없습니다.');return;}const h={customer:form.customer,date:form.date,manager:form.manager,savedAt:new Date().toLocaleString('ko-KR'),form:JSON.parse(JSON.stringify(form)),quotes:JSON.parse(JSON.stringify(quotes))};history.unshift(h);history=history.slice(0,150);saveHistoryStorage();renderHistory();notify('현재 브라우저의 견적 이력에 저장했습니다.')});
     $('historyList').addEventListener('click',e=>{const load=e.target.closest('[data-history-load]'),del=e.target.closest('[data-history-delete]');if(load){const h=history[Number(load.dataset.historyLoad)];if(!h)return;form={...form,...h.form};quotes=JSON.parse(JSON.stringify(h.quotes||[]));syncFormInputs();if(sourceReady)activateMonth();renderItems();renderPaper();switchPage('write');store();notify('견적 이력을 불러왔습니다.')}else if(del&&confirm('이 견적 이력을 삭제할까요?')){history.splice(Number(del.dataset.historyDelete),1);saveHistoryStorage();renderHistory()}});
     $('historyExportBtn').addEventListener('click',()=>downloadJSON('skmagic_quote_history.json',history));
-    $('backupBtn').addEventListener('click',()=>downloadJSON('skmagic_quote_admin_backup_'+dateText()+'.json',{version:'1.2',savedAt:new Date().toISOString(),form,quotes,history,managers,supplier,imageOverrides:Object.fromEntries(imageOverrides)}));
+    $('backupBtn').addEventListener('click',()=>downloadJSON('skmagic_quote_admin_backup_'+dateText()+'.json',{version:'1.7',savedAt:new Date().toISOString(),form,quotes,history,managers,supplier,imageOverrides:Object.fromEntries(imageOverrides)}));
     $('restoreBtn').addEventListener('click',()=>$('restoreFile').click());
     $('restoreFile').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const obj=JSON.parse(await f.text());if(!obj||!Array.isArray(obj.quotes))throw new Error('견적 백업 형식이 아닙니다.');if(!confirm('현재 작성 중인 견적과 이력을 백업 파일로 교체할까요?'))return;form={...form,...obj.form};quotes=obj.quotes;history=Array.isArray(obj.history)?obj.history:[];if(Array.isArray(obj.managers))managers=obj.managers.filter(m=>m&&typeof m.name==='string'&&typeof m.phone==='string');if(obj.supplier&&typeof obj.supplier==='object')supplier={...supplierDefaults,...obj.supplier};renderSavedManagerUI();if(obj.imageOverrides&&typeof obj.imageOverrides==='object'){for(const [k,v] of Object.entries(obj.imageOverrides)){if(typeof v==='string'&&/^data:image\/(?:png|jpeg|webp);base64,/.test(v)){await saveImageToDB(k,v);imageOverrides.set(k,v);}}}syncFormInputs();if(sourceReady)activateMonth();renderItems();renderPaper();saveHistoryStorage();store();notify('백업 복원 완료')}catch(err){notify('백업 불러오기 실패: '+err.message)}finally{e.target.value=''}});
     $('reloadDataBtn').addEventListener('click',loadSource);
