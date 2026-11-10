@@ -926,3 +926,7 @@
 .manual-promo-entry .manual-promo-box{margin:0!important;border:0!important;box-shadow:none!important;border-radius:0!important;background:#fffbf8!important;padding:14px!important}
 .manual-promo-usage{font-size:11px;line-height:1.55;color:#99431b;margin-top:10px;font-weight:760}
 .manual-promo-usage strong{color:#b73320}
+
+/* V1.7.2 고객 구분·호칭 입력 선택 */
+.recipient-options{margin-top:2px;margin-bottom:5px}
+.recipient-options select,.recipient-options input{background:#ffffff!important}

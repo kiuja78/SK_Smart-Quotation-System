@@ -1,4 +1,4 @@
-/* SK매직 견적자동화 관리자 WEB V1.7.1
+/* SK매직 견적자동화 관리자 WEB V1.7.2
    계산기 원본 데이터(월별 제품/계약/프로모션/이미지)를 읽고,
    견적 및 수기 수정은 별도로 관리합니다. 기존 CUCKOO API와 연결하지 않습니다. */
 (() => {
@@ -27,7 +27,7 @@
   const supplierDefaults={name:'SK인텔리스(주)',number:'104-86-48203',ceo:'안무인',address:'서울특별시 종로구 청계천로 85, 18층(관철동, 삼일빌딩)',type:'도소매',category:'전자, 전기제품'};
   let supplier={...supplierDefaults};
   let imageOverrides=new Map(),activeCanvas=null,toastTimer=null,saveTimer=null;
-  let form={customer:'',date:dateText(),manager:'',phone:'',managerId:'',month:'',category:'전체',search:'',productId:'',customerType:'신규',quantity:1,special:false,specialAmount:'',specialMonths:'',promoIndex:'',manualPromoName:'',manualPromoMode:'text',manualPromoMonths:'',manualPromoPrice:'',manualPromoNote:'',showMonthly:true,showCommit:true,showImages:true,showDetails:true,note:''};
+  let form={customer:'',recipientKind:'auto',recipientSuffix:'',date:dateText(),manager:'',phone:'',managerId:'',month:'',category:'전체',search:'',productId:'',customerType:'신규',quantity:1,special:false,specialAmount:'',specialMonths:'',promoIndex:'',manualPromoName:'',manualPromoMode:'text',manualPromoMonths:'',manualPromoPrice:'',manualPromoNote:'',showMonthly:true,showCommit:true,showImages:true,showDetails:true,note:''};
   function notify(text){const node=$('toast');node.textContent=text;node.classList.add('active');clearTimeout(toastTimer);toastTimer=setTimeout(()=>node.classList.remove('active'),3000)}
   function alertBanner(text){$('globalAlert').textContent=text;$('globalAlert').classList.toggle('visible',!!text)}
   function store(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify({form,quotes}));localStorage.setItem(MANAGER_KEY,JSON.stringify(managers));localStorage.setItem(SUPPLIER_KEY,JSON.stringify(supplier));$('draftState').textContent='이 브라우저에 저장됨'}catch(e){$('draftState').textContent='저장 실패 · 백업 필요';console.warn(e)}},180)}
@@ -374,18 +374,39 @@
     const paper=$('paper'), host=paper?.closest('.preview-column');if(!paper||!host)return;
     paper.style.zoom=String(Math.min(1,Math.max(.45,(host.clientWidth-2)/794)));
   }
+  // 수신인 호칭: 법인/단체 표시가 있는 고객명만 자동으로 '귀중' 처리합니다.
+  // 자동 판별이 어려운 이름은 작성자가 받는 분 구분을 직접 바꿀 수 있습니다.
+  const organizationNamePattern = /(?:주식회사|\(주\)|㈜|법인|재단|사단|협회|조합|연합회|위원회|공단|공사|관공서|시청|구청|군청|동사무소|행정복지센터|학교|대학교|대학|학원|어린이집|유치원|병원|의원|교회|성당|사찰|센터|기관|단체|총국|지국|본부|\b(?:inc\.?|corp\.?|ltd\.?|llc)\b)/i;
+  function effectiveRecipientKind() {
+    if(form.recipientKind==='organization'||form.recipientKind==='individual')return form.recipientKind;
+    return organizationNamePattern.test(String(form.customer||''))?'organization':'individual';
+  }
+  function effectiveRecipientSuffix(){
+    const manuallyEdited=String(form.recipientSuffix||'').trim();
+    return manuallyEdited || (effectiveRecipientKind()==='organization'?'귀중':'귀하');
+  }
+  function syncRecipientSuffixInput(){
+    const suffixInput=$('recipientSuffix');
+    if(suffixInput && document.activeElement!==suffixInput) suffixInput.value=effectiveRecipientSuffix();
+  }
+  function recipientDisplayText(){
+    let name=String(form.customer||'').trim().replace(/\s+(귀하|귀중)$/,'').trim();
+    const suffix=effectiveRecipientSuffix();
+    if(!name)name='고객님';
+    // 성함은 사용자가 적은 형태를 유지합니다. (예: 홍길동 귀하 / 홍길동님 귀하)
+    return `${name} ${suffix}`;
+  }
   function renderPaper(){
     const paper=$('paper'),t=calculateTotals();
     const company=supplier;
-    const customerText=String(form.customer||'').trim();
-    const recipient=customerText?(customerText.endsWith('님')?customerText+' 귀하':customerText+'님 귀하'):'고객님 귀하';
+    const recipient=recipientDisplayText();
     const headerHtml = `
       <div class="p-top">
         <div class="p-heading-left"><div class="p-header-main"><div class="p-logo-crop"><img src="./assets/skmagic_logo_fitted.png" alt="SK magic 정식 로고"></div><span class="p-logo-divider"></span><h1>구독 견적서</h1></div></div>
         <div class="p-top-date">견적 작성일 <b>${escapeHtml(form.date||dateText())}</b></div>
       </div>
       <div class="p-intro-grid">
-        <div class="p-recipient"><h2>${escapeHtml(recipient)}</h2><p>아래와 같이 견적합니다.<br>본 견적은 발행일 기준으로 안내드립니다.</p></div>
+        <div class="p-recipient"><h2>${escapeHtml(recipient)}</h2><p>아래와 같이 견적합니다.<br>본 견적은 발행월 기준입니다.</p></div>
         <div class="p-business-box"><div class="biz-row"><b>사업자등록번호</b><span title="${escapeHtml(company.number||'-')}">${escapeHtml(company.number||'-')}</span><b>대표이사</b><span title="${escapeHtml(company.ceo||'-')}">${escapeHtml(company.ceo||'-')}</span></div><div class="biz-row full"><b>상호</b><span title="${escapeHtml(company.name||'-')}">${escapeHtml(company.name||'-')}</span></div><div class="biz-row full"><b>주소</b><span title="${escapeHtml(company.address||'-')}">${escapeHtml(company.address||'-')}</span></div><div class="biz-row"><b>업태</b><span title="${escapeHtml(company.type||'-')}">${escapeHtml(company.type||'-')}</span><b>종목</b><span title="${escapeHtml(company.category||'-')}">${escapeHtml(company.category||'-')}</span></div><div class="biz-row manager"><b>담당자</b><span title="${escapeHtml(form.manager||'-')}">${escapeHtml(form.manager||'-')}</span><b>연락처</b><span title="${escapeHtml(form.phone||'-')}">${escapeHtml(form.phone||'-')}</span></div></div>
       </div>`;
     const tableHtml = quotes.length?`<div class="quote-table-section"><table class="paper-table quote-prices"><colgroup><col style="width:16%"><col style="width:11%"><col style="width:17%"><col style="width:12%"><col style="width:14%"><col style="width:14%"><col style="width:16%"></colgroup><thead><tr><th>모델명</th><th>의무기간</th><th>점검조건</th><th>등록·설치비</th><th>정상구독료</th><th>할인구독료</th><th>견적구독료</th></tr></thead><tbody>${quotes.map(paperRow).join('')}</tbody></table></div>`:'<div class="empty-paper">왼쪽에서 제품과 계약조건을 선택해<br>견적에 추가해주세요.</div>';
@@ -399,7 +420,7 @@
           <span class="note-label">${hasBenefitNote?'혜택 · 특이사항':'특이사항'}</span>
           <div class="note-copy">${escapeHtml(String(form.note).trim())}</div>
         </section>` : '';
-    const footerHtml = `<div class="paper-footer"><span>본 견적은 발행일 기준이며 프로모션 및 재고 상황에 따라 변경될 수 있습니다.</span><strong>문의 | ${escapeHtml(form.manager||'담당자')} ${escapeHtml(form.phone||'')}</strong></div>`;
+    const footerHtml = `<div class="paper-footer"><span>본 견적은 발행월 기준이며 프로모션 및 재고 상황에 따라 변경될 수 있습니다.</span><strong>문의 | ${escapeHtml(form.manager||'담당자')} ${escapeHtml(form.phone||'')}</strong></div>`;
 
     // 견적 금액 표는 1장에 모아서 보여주되, 상세정보는 1장부터 2개씩 배치합니다.
     // 3번째 제품부터 2장, 5번째부터 3장으로 넘어갑니다.
@@ -459,6 +480,7 @@
   function renderHistory(){$('historyList').innerHTML=history.length?history.map((h,i)=>`<div class="history-entry"><div><b>${escapeHtml(h.customer||'고객님')} · ${escapeHtml(h.date||'')} · ${h.quotes?.length||0}개 모델</b><small>${escapeHtml(h.savedAt||'')} · 담당자 ${escapeHtml(h.manager||'')}</small></div><div><button data-history-load="${i}">불러오기</button> <button data-history-delete="${i}">삭제</button></div></div>`).join(''):'<div class="empty-message">저장된 견적 이력이 없습니다.</div>'}
 
   function syncFormInputs(){const ids={customerName:'customer',quoteDate:'date',managerName:'manager',managerPhone:'phone',searchInput:'search',quantityInput:'quantity',specialAmount:'specialAmount',specialMonths:'specialMonths',manualPromoName:'manualPromoName',manualPromoMonths:'manualPromoMonths',manualPromoPrice:'manualPromoPrice',manualPromoNote:'manualPromoNote',customNote:'note'};for(const [id,key] of Object.entries(ids)){$(id).value=form[key]??'';}
+    $('recipientKind').value=form.recipientKind||'auto';syncRecipientSuffixInput();
     $('showMonthly').checked=!!form.showMonthly;$('showCommit').checked=!!form.showCommit;$('showImages').checked=!!form.showImages;$('showDetails').checked=!!form.showDetails;$('specialToggle').checked=!!form.special;$('manualPromoMode').value=form.manualPromoMode||'text';}
   function setupEditorAccordions(){
     const panels=[...document.querySelectorAll('#page-write .editor-column > .panel')];
@@ -485,7 +507,10 @@
   function switchPage(name){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));if(name==='products')renderCatalog();if(name==='history')renderHistory();if(name==='managers')renderManagerList();if(name==='settings'){renderOverrideSelect();syncSupplierInputs();}if(name!=='write'){const page=$('page-'+name);if(page)page.scrollTop=0;}}
   function bind(){document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>switchPage(b.dataset.page)));
     const inputToForm={customerName:'customer',quoteDate:'date',managerName:'manager',managerPhone:'phone',customNote:'note'};
-    for(const [id,key] of Object.entries(inputToForm)){$(id).addEventListener('input',e=>{form[key]=e.target.value;if(id==='managerName'||id==='managerPhone'){form.managerId='';renderManagerSelect();}renderPaper();store()});}
+    for(const [id,key] of Object.entries(inputToForm)){$(id).addEventListener('input',e=>{form[key]=e.target.value;if(id==='customerName')syncRecipientSuffixInput();if(id==='managerName'||id==='managerPhone'){form.managerId='';renderManagerSelect();}renderPaper();store()});}
+    $('recipientKind').addEventListener('change',e=>{form.recipientKind=e.target.value;form.recipientSuffix='';syncRecipientSuffixInput();renderPaper();store()});
+    $('recipientSuffix').addEventListener('input',e=>{form.recipientSuffix=e.target.value.trim();renderPaper();store()});
+    $('recipientSuffix').addEventListener('blur',()=>syncRecipientSuffixInput());
     for(const [id,key] of [['showMonthly','showMonthly'],['showCommit','showCommit'],['showImages','showImages'],['showDetails','showDetails']]){$(id).addEventListener('change',e=>{form[key]=e.target.checked;renderPaper();store()});}
     $('openManagerMenu').addEventListener('click',()=>switchPage('managers'));
     $('savedManagerSelect').addEventListener('change',e=>{if(e.target.value)useSavedManager(e.target.value);else{form.managerId='';store()}});
