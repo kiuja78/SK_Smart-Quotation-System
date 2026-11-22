@@ -33,7 +33,7 @@
   const supplierDefaults={name:'SK인텔리스(주)',number:'104-86-48203',ceo:'안무인',address:'서울특별시 종로구 청계천로 85, 18층(관철동, 삼일빌딩)',type:'도소매',category:'전자, 전기제품'};
   let supplier={...supplierDefaults};
   let imageOverrides=new Map(),activeCanvas=null,toastTimer=null,saveTimer=null;
-  let form={customer:'',recipientKind:'auto',recipientSuffix:'',showExisting:false,existingModel:'',existingMonths:'',existingRental:'',date:dateText(),manager:'',phone:'',managerId:'',month:'',category:'전체',search:'',productId:'',customerType:'신규',quantity:1,special:false,specialAmount:'',specialMonths:'',promoIndex:'',manualPromoName:'',manualPromoMode:'text',manualPromoMonths:'',manualPromoPrice:'',manualPromoNote:'',showMonthly:true,showCommit:true,showImages:true,showDetails:true,note:''};
+  let form={customer:'',recipientKind:'auto',recipientSuffix:'',showExisting:false,existingModel:'',existingMonths:'',existingUsePeriod:'',existingRental:'',date:dateText(),manager:'',phone:'',managerId:'',month:'',category:'전체',search:'',productId:'',customerType:'신규',quantity:1,special:false,specialAmount:'',specialMonths:'',promoIndex:'',manualPromoName:'',manualPromoMode:'text',manualPromoMonths:'',manualPromoPrice:'',manualPromoNote:'',showMonthly:true,showCommit:true,showImages:true,showDetails:true,note:''};
   function notify(text){const node=$('toast');node.textContent=text;node.classList.add('active');clearTimeout(toastTimer);toastTimer=setTimeout(()=>node.classList.remove('active'),3000)}
   function alertBanner(text){$('globalAlert').textContent=text;$('globalAlert').classList.toggle('visible',!!text)}
   function store(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify({form,quotes}));localStorage.setItem(MANAGER_KEY,JSON.stringify(managers));localStorage.setItem(SUPPLIER_KEY,JSON.stringify(supplier));localStorage.setItem(FEATURE_LIBRARY_KEY,JSON.stringify(modelFeatureLibrary));$('draftState').textContent='이 브라우저에 저장됨'}catch(e){$('draftState').textContent='저장 실패 · 백업 필요';console.warn(e)}},180)}
@@ -453,17 +453,15 @@
     if(!form.showDetails||!items.length)return '';
     const cards=items.map((q,index)=>{
       const d=quoteDetailData(q);
-      const heroFeatureCount=quotes.length>=5 && quotes[0]===q ? 0 : d.functions.length>=4?2:3;
-      const heroFeatures=d.features.slice(0,heroFeatureCount);
-      const visibleFeatures=d.features.slice(heroFeatureCount); // Remaining features flow between A4 pages.
+      const inlineFeatures=d.features;
       const fact=(label,value,extra='')=>value
         ? `<div class="sq-fact ${extra}"><div class="sq-fact-key">${escapeHtml(label)}</div><div class="sq-fact-val">${escapeHtml(value)}</div></div>`:'';
       const functions=d.functions.length?d.functions.map(x=>`<span class="sq-function">${escapeHtml(x)}</span>`).join(''):'';
-      // Fixed, semantic two-column feature list; icon is an actual separate element, never an overlay.
-      const featureList=visibleFeatures.length
-        ? visibleFeatures.map((text,featIndex)=>`<li class="sq-feature" data-feature-order="${featIndex}"><span class="sq-feature-check" aria-hidden="true">✓</span><span>${escapeHtml(text)}</span></li>`).join('')
+      const featureList=inlineFeatures.length
+        ? inlineFeatures.map((text,featIndex)=>`<li class="sq-feature" data-feature-order="${featIndex}"><span class="sq-feature-check" aria-hidden="true">✓</span><span>${escapeHtml(text)}</span></li>`).join('')
         : '<li class="sq-feature sq-feature-empty"><span>원본 제품정보에 등록된 특장점이 없습니다.</span></li>';
-      return `<section class="detail-card sq-card" data-detail-model="${escapeHtml(d.model)}" data-detail-id="${escapeHtml(String(q.id||d.model))}">
+      const compactClass=layout==='first'?' sq-card-inline-first':'';
+      return `<section class="detail-card sq-card${compactClass}" data-detail-model="${escapeHtml(d.model)}" data-detail-id="${escapeHtml(String(q.id||d.model))}">
         <header class="sq-card-header">
           <div class="sq-card-ident"><span class="sq-eyebrow">PRODUCT DETAILS</span><h3>${escapeHtml(d.name)}</h3></div>
           <span class="sq-model-id">${escapeHtml(d.model)}</span>
@@ -474,18 +472,18 @@
           </figure>
           <div class="sq-spec-panel">
             <div class="sq-spec-title">제품 기본정보</div>
-            ${fact('모델명',d.model)}
-            ${fact('제품 사이즈',d.size)}
+            ${fact('제품모델명',d.model)}
+            ${fact('제품명',d.name)}
+            ${fact('사이즈',d.size)}
             ${fact('용량 · 저장량',d.capacity)}
             ${fact('관리조건',d.management)}
             ${functions?`<div class="sq-functions"><span class="sq-fact-key">주요 기능</span><div class="sq-function-list">${functions}</div></div>`:''}
-            ${heroFeatures.length?`<div class="sq-hero-features"><strong>핵심 특장점</strong><ul>${heroFeatures.map(t=>`<li>${escapeHtml(t)}</li>`).join('')}</ul></div>`:''}
+            <div class="sq-feature-panel sq-feature-panel-inline">
+              <div class="sq-feature-heading"><span>제품 특장점</span></div>
+              <ul class="sq-feature-grid">${featureList}</ul>
+            </div>
           </div>
         </div>
-        ${visibleFeatures.length?`<div class="sq-feature-panel">
-          <div class="sq-feature-heading"><span>제품 특장점</span></div>
-          <ul class="sq-feature-grid">${featureList}</ul>
-        </div>`:''}
       </section>`;
     });
     return `<div class="paper-section-title detail-heading"><span>제품 상세정보</span></div><div class="detail-list sq-detail-list">${cards.join('')}</div>`;
@@ -707,8 +705,7 @@
     const paper=$('paper');
     for(const q of quotes){
       const data=quoteDetailData(q);
-      const prefix=Math.min(data.features.length,quotes.length>=5&&quotes[0]===q?0:data.functions.length>=4?2:3);
-      const expected=data.features.slice(prefix);
+      const expected=data.features;
       const id=String(q.id||q.model||'');
       const selectors=[...paper.querySelectorAll('.sq-card[data-detail-id],.sq-feature-flow[data-detail-id]')]
         .filter(el=>el.dataset.detailId===id);
@@ -821,19 +818,20 @@
     const oldContractVisible = form.showExisting === true;
     const oldModel = String(form.existingModel||'').trim();
     const oldMonthsRaw = String(form.existingMonths??'').trim();
+    const oldUsePeriodRaw = String(form.existingUsePeriod??'').trim();
     const oldMonthlyRaw = String(form.existingRental??'').trim();
     const oldPeriod = oldMonthsRaw && Number(oldMonthsRaw)>0 ? `${Math.floor(Number(oldMonthsRaw)).toLocaleString('ko-KR')}개월` : '—';
+    const oldUsePeriod = oldUsePeriodRaw || '—';
     const oldMonthly = oldMonthlyRaw && Number.isFinite(Number(oldMonthlyRaw)) && Number(oldMonthlyRaw)>=0
       ? won(Number(oldMonthlyRaw)) : '—';
     const existingHtml = oldContractVisible ? `<section class="sq-existing-contract" aria-label="기존 이용제품 정보">
-      <div class="sq-existing-heading"><span class="sq-existing-mark">현재 사용 중인 제품</span><span class="sq-existing-note">만기 · 교체 안내</span></div>
-      <table class="sq-existing-table"><colgroup><col style="width:39%"><col style="width:24%"><col style="width:37%"></colgroup>
-        <thead><tr><th>기존 사용 모델명</th><th>기존 계약기간</th><th>현재 월 렌탈료</th></tr></thead>
-        <tbody><tr><td class="sq-existing-model">${escapeHtml(oldModel||'—')}</td><td>${escapeHtml(oldPeriod)}</td><td class="sq-existing-fee">${escapeHtml(oldMonthly)}</td></tr></tbody>
+      <div class="sq-existing-heading"><span class="sq-existing-mark">현재 사용 중인 제품</span></div>
+      <table class="sq-existing-table"><colgroup><col style="width:30%"><col style="width:20%"><col style="width:20%"><col style="width:30%"></colgroup>
+        <thead><tr><th>기존 사용 모델명</th><th>기존 계약기간</th><th>사용기간</th><th>현재 월 렌탈료</th></tr></thead>
+        <tbody><tr><td class="sq-existing-model">${escapeHtml(oldModel||'—')}</td><td>${escapeHtml(oldPeriod)}</td><td>${escapeHtml(oldUsePeriod)}</td><td class="sq-existing-fee">${escapeHtml(oldMonthly)}</td></tr></tbody>
       </table>
     </section>` : '';
-    const replacementLabel = oldContractVisible && quotes.length
-      ? '<div class="sq-replacement-heading"><span>교체 제안 제품</span><small>신규 구독 견적</small></div>' : '';
+    const replacementLabel = oldContractVisible && quotes.length ? '<div class="sq-replacement-heading"><span>교체 제안 제품</span></div>' : '';
     const tableHtml = quotes.length?`<div class="quote-table-section"><table class="paper-table quote-prices"><colgroup><col style="width:16%"><col style="width:11%"><col style="width:17%"><col style="width:12%"><col style="width:14%"><col style="width:14%"><col style="width:16%"></colgroup><thead><tr><th>모델명</th><th>의무기간</th><th>점검조건</th><th>등록·설치비</th><th>정상구독료</th><th>할인구독료</th><th>견적구독료</th></tr></thead><tbody>${quotes.map(paperRow).join('')}</tbody></table></div>`:'<div class="empty-paper">왼쪽에서 제품과 계약조건을 선택해<br>견적에 추가해주세요.</div>';
     const monthlyHtml = quotes.length&&form.showMonthly?`<div class="monthly-summary"><div class="paper-section-title"><span>수량별 월 총 구독료</span></div><table class="paper-table qty-summary"><thead><tr><th>모델명</th><th>수량</th><th>월 구독료</th><th>월 합계</th></tr></thead><tbody>${quotes.map(q=>`<tr><td>${escapeHtml(q.model)}</td><td>${q.qty}대</td><td>${won(q.monthly)}</td><td>${won(q.monthly*q.qty)}</td></tr>`).join('')}<tr class="total-row"><td colspan="3">월 총 구독료 (프로모션 종료 후)</td><td>${won(t.normalMonthly)}</td></tr></tbody></table></div>`:'';
     const commitHtml = quotes.length&&form.showCommit?`<div class="commit-summary"><div class="commit-card"><small>의무기간 기준 총 구독료</small><b>${won(t.obligation)}</b></div><div class="commit-card accent"><small>프로모션 반영 예상 총액</small><b>${won(t.actual)}</b></div></div>`:'';
@@ -899,6 +897,7 @@
     $('showExisting').checked=!!form.showExisting;
     $('existingModel').value=form.existingModel??'';
     $('existingMonths').value=form.existingMonths??'';
+    $('existingUsePeriod').value=form.existingUsePeriod??'';
     $('existingRental').value=form.existingRental??'';
     $('existingContractFields').classList.toggle('hidden',!form.showExisting);
     $('showMonthly').checked=!!form.showMonthly;$('showCommit').checked=!!form.showCommit;$('showImages').checked=!!form.showImages;$('showDetails').checked=!!form.showDetails;$('specialToggle').checked=!!form.special;$('manualPromoMode').value=form.manualPromoMode||'text';}
@@ -942,7 +941,7 @@
       $('existingContractFields').classList.toggle('hidden',!form.showExisting);
       renderPaper();store();
     });
-    for(const [id,key] of [['existingModel','existingModel'],['existingMonths','existingMonths'],['existingRental','existingRental']]){
+    for(const [id,key] of [['existingModel','existingModel'],['existingMonths','existingMonths'],['existingUsePeriod','existingUsePeriod'],['existingRental','existingRental']]){
       $(id).addEventListener('input',e=>{
         const value=e.target.value;
         form[key]=key==='existingModel'?value.slice(0,90):value;
@@ -1051,11 +1050,11 @@
     $('catalogMonth').addEventListener('change',e=>{form.month=e.target.value;form.productId='';selection={};activateMonth()});
     $('catalogGrid').addEventListener('click',e=>{const b=e.target.closest('[data-catalog-pick]');if(!b)return;form.category='전체';form.search='';form.productId=b.dataset.catalogPick;selection={};$('searchInput').value='';renderCategories();renderProducts();switchPage('write');store()});
     $('saveHistoryBtn').addEventListener('click',()=>{if(!quotes.length){notify('저장할 견적 모델이 없습니다.');return;}const h={customer:form.customer,date:form.date,manager:form.manager,savedAt:new Date().toLocaleString('ko-KR'),form:JSON.parse(JSON.stringify(form)),quotes:JSON.parse(JSON.stringify(quotes))};history.unshift(h);history=history.slice(0,150);saveHistoryStorage();renderHistory();notify('현재 브라우저의 견적 이력에 저장했습니다.')});
-    $('historyList').addEventListener('click',e=>{const load=e.target.closest('[data-history-load]'),del=e.target.closest('[data-history-delete]');if(load){const h=history[Number(load.dataset.historyLoad)];if(!h)return;form={...form,showExisting:false,existingModel:'',existingMonths:'',existingRental:'',...h.form};quotes=JSON.parse(JSON.stringify(h.quotes||[]));syncFormInputs();if(sourceReady)activateMonth();renderItems();renderPaper();switchPage('write');store();notify('견적 이력을 불러왔습니다.')}else if(del&&confirm('이 견적 이력을 삭제할까요?')){history.splice(Number(del.dataset.historyDelete),1);saveHistoryStorage();renderHistory()}});
+    $('historyList').addEventListener('click',e=>{const load=e.target.closest('[data-history-load]'),del=e.target.closest('[data-history-delete]');if(load){const h=history[Number(load.dataset.historyLoad)];if(!h)return;form={...form,showExisting:false,existingModel:'',existingMonths:'',existingUsePeriod:'',existingRental:'',...h.form};quotes=JSON.parse(JSON.stringify(h.quotes||[]));syncFormInputs();if(sourceReady)activateMonth();renderItems();renderPaper();switchPage('write');store();notify('견적 이력을 불러왔습니다.')}else if(del&&confirm('이 견적 이력을 삭제할까요?')){history.splice(Number(del.dataset.historyDelete),1);saveHistoryStorage();renderHistory()}});
     $('historyExportBtn').addEventListener('click',()=>downloadJSON('skmagic_quote_history.json',history));
     $('backupBtn').addEventListener('click',()=>downloadJSON('skmagic_quote_admin_backup_'+dateText()+'.json',{version:'1.9.5',savedAt:new Date().toISOString(),form,quotes,history,managers,supplier,modelFeatureLibrary,imageOverrides:Object.fromEntries(imageOverrides)}));
     $('restoreBtn').addEventListener('click',()=>$('restoreFile').click());
-    $('restoreFile').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const obj=JSON.parse(await f.text());if(!obj||!Array.isArray(obj.quotes))throw new Error('견적 백업 형식이 아닙니다.');if(!confirm('현재 작성 중인 견적과 이력을 백업 파일로 교체할까요?'))return;form={...form,showExisting:false,existingModel:'',existingMonths:'',existingRental:'',...obj.form};quotes=obj.quotes;history=Array.isArray(obj.history)?obj.history:[];if(Array.isArray(obj.managers))managers=obj.managers.filter(m=>m&&typeof m.name==='string'&&typeof m.phone==='string');if(obj.supplier&&typeof obj.supplier==='object')supplier={...supplierDefaults,...obj.supplier};if(obj.modelFeatureLibrary&&typeof obj.modelFeatureLibrary==='object'&&!Array.isArray(obj.modelFeatureLibrary))modelFeatureLibrary=Object.fromEntries(Object.entries(obj.modelFeatureLibrary).filter(([k,v])=>typeof k==='string'&&Array.isArray(v)).map(([k,v])=>[k,v.filter(x=>typeof x==='string')]));renderSavedManagerUI();if(obj.imageOverrides&&typeof obj.imageOverrides==='object'){for(const [k,v] of Object.entries(obj.imageOverrides)){if(typeof v==='string'&&/^data:image\/(?:png|jpeg|webp);base64,/.test(v)){await saveImageToDB(k,v);imageOverrides.set(k,v);}}}syncFormInputs();if(sourceReady)activateMonth();renderItems();renderPaper();saveHistoryStorage();store();notify('백업 복원 완료')}catch(err){notify('백업 불러오기 실패: '+err.message)}finally{e.target.value=''}});
+    $('restoreFile').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const obj=JSON.parse(await f.text());if(!obj||!Array.isArray(obj.quotes))throw new Error('견적 백업 형식이 아닙니다.');if(!confirm('현재 작성 중인 견적과 이력을 백업 파일로 교체할까요?'))return;form={...form,showExisting:false,existingModel:'',existingMonths:'',existingUsePeriod:'',existingRental:'',...obj.form};quotes=obj.quotes;history=Array.isArray(obj.history)?obj.history:[];if(Array.isArray(obj.managers))managers=obj.managers.filter(m=>m&&typeof m.name==='string'&&typeof m.phone==='string');if(obj.supplier&&typeof obj.supplier==='object')supplier={...supplierDefaults,...obj.supplier};if(obj.modelFeatureLibrary&&typeof obj.modelFeatureLibrary==='object'&&!Array.isArray(obj.modelFeatureLibrary))modelFeatureLibrary=Object.fromEntries(Object.entries(obj.modelFeatureLibrary).filter(([k,v])=>typeof k==='string'&&Array.isArray(v)).map(([k,v])=>[k,v.filter(x=>typeof x==='string')]));renderSavedManagerUI();if(obj.imageOverrides&&typeof obj.imageOverrides==='object'){for(const [k,v] of Object.entries(obj.imageOverrides)){if(typeof v==='string'&&/^data:image\/(?:png|jpeg|webp);base64,/.test(v)){await saveImageToDB(k,v);imageOverrides.set(k,v);}}}syncFormInputs();if(sourceReady)activateMonth();renderItems();renderPaper();saveHistoryStorage();store();notify('백업 복원 완료')}catch(err){notify('백업 불러오기 실패: '+err.message)}finally{e.target.value=''}});
     $('reloadDataBtn').addEventListener('click',loadSource);
     $('imageOverrideInput').addEventListener('change',handleImageOverride);
     $('removeImageOverride').addEventListener('click',async()=>{const key=form.month+'|'+$('imageOverrideModel').value;if(!key||!$('imageOverrideModel').value)return;await deleteImageFromDB(key);imageOverrides.delete(key);$('imageStatus').textContent='이 모델의 이미지를 계산기 원본으로 복원했습니다.';renderChosenProduct();renderCatalog();renderPaper();});

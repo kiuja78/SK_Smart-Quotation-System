@@ -529,3 +529,127 @@
 :is(#paper,.export-paper) .sq-page-tight.details-page .sq-feature:nth-child(n){
   padding-top:8px!important;padding-bottom:8px!important;
 }
+
+
+/* V1.9.7 — first-page fill, integrated product features, replacement quote cleanup */
+:is(#paper,.export-paper) .sq-feature-panel-inline{
+  margin:10px 0 0!important;
+  padding:10px 0 0!important;
+  border-top:1px solid #e1eaf2!important;
+}
+:is(#paper,.export-paper) .sq-feature-panel-inline .sq-feature-heading{
+  margin-bottom:8px!important;
+}
+:is(#paper,.export-paper) .sq-feature-panel-inline .sq-feature-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px 10px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-card-header,
+:is(#paper,.export-paper) .first-page .sq-card-header{
+  padding:10px 16px 8px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-card-ident h3,
+:is(#paper,.export-paper) .first-page .sq-card-ident h3{
+  font-size:15.5px!important;
+  line-height:1.32!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-card-hero,
+:is(#paper,.export-paper) .first-page .sq-card-hero{
+  grid-template-columns:165px minmax(0,1fr)!important;
+  gap:14px!important;
+  padding:10px 16px 10px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-photo,
+:is(#paper,.export-paper) .first-page .sq-photo{
+  width:165px!important;
+  height:190px!important;
+  min-height:190px!important;
+  padding:6px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-spec-title,
+:is(#paper,.export-paper) .first-page .sq-spec-title{
+  font-size:12px!important;
+  padding-bottom:6px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-fact,
+:is(#paper,.export-paper) .first-page .sq-fact{
+  grid-template-columns:78px minmax(0,1fr)!important;
+  padding:6px 0!important;
+  gap:8px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-fact-key,
+:is(#paper,.export-paper) .first-page .sq-fact-key{
+  font-size:10.8px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-fact-val,
+:is(#paper,.export-paper) .first-page .sq-fact-val{
+  font-size:11.8px!important;
+  line-height:1.45!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-functions,
+:is(#paper,.export-paper) .first-page .sq-functions{
+  padding-top:8px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-function-list,
+:is(#paper,.export-paper) .first-page .sq-function-list{
+  gap:5px!important;
+  margin-top:6px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-function,
+:is(#paper,.export-paper) .first-page .sq-function{
+  font-size:10.8px!important;
+  padding:4px 8px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-feature-panel-inline,
+:is(#paper,.export-paper) .first-page .sq-feature-panel-inline{
+  margin-top:8px!important;
+  padding-top:8px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-feature-heading,
+:is(#paper,.export-paper) .first-page .sq-feature-heading{
+  font-size:12.2px!important;
+  margin-bottom:7px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-feature-grid,
+:is(#paper,.export-paper) .first-page .sq-feature-grid{
+  gap:7px 8px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-feature,
+:is(#paper,.export-paper) .first-page .sq-feature{
+  font-size:11.4px!important;
+  line-height:1.42!important;
+  padding:7px 8px!important;
+  min-height:0!important;
+  border-radius:8px!important;
+}
+:is(#paper,.export-paper) .sq-card-inline-first .sq-feature-check,
+:is(#paper,.export-paper) .first-page .sq-feature-check{
+  width:15px!important;height:15px!important;min-width:15px!important;font-size:10px!important;
+}
+:is(#paper,.export-paper) .sq-existing-heading{justify-content:flex-start!important}
+:is(#paper,.export-paper) .sq-existing-note{display:none!important}
+:is(#paper,.export-paper) .sq-existing-table th{font-size:10.5px!important}
+:is(#paper,.export-paper) .sq-existing-table td{font-size:13.2px!important;padding:8px 6px 9px!important}
+:is(#paper,.export-paper) .sq-existing-table td.sq-existing-fee{font-size:16px!important}
+:is(#paper,.export-paper) .sq-replacement-heading{justify-content:flex-start!important;padding-left:10px!important}
+:is(#paper,.export-paper) .sq-replacement-heading small{display:none!important}
+:is(#paper,.export-paper) .sq-replacement-heading span{font-size:13.5px!important}
+:is(#paper,.export-paper) .details-page .sq-card-hero,
+:is(#paper,.export-paper) .sq-shared-page .sq-card-hero,
+:is(#paper,.export-paper) .sq-shared-page.details-page .sq-card-hero{
+  grid-template-columns:200px minmax(0,1fr)!important;
+  gap:18px!important;
+  padding:14px 18px 12px!important;
+}
+:is(#paper,.export-paper) .details-page .sq-photo,
+:is(#paper,.export-paper) .sq-shared-page .sq-photo,
+:is(#paper,.export-paper) .sq-shared-page.details-page .sq-photo{
+  width:200px!important;
+  height:245px!important;
+  min-height:245px!important;
+}
+:is(#paper,.export-paper) .details-page .sq-feature-panel-inline,
+:is(#paper,.export-paper) .sq-shared-page .sq-feature-panel-inline{
+  margin-top:10px!important;
+  padding-top:10px!important;
+}
